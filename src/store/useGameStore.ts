@@ -1,0 +1,153 @@
+import { create } from 'zustand'
+
+export type Difficulty = 'EZ' | 'Normal' | 'Asian'
+export type LetterStatus = 'empty' | 'absent' | 'present' | 'correct'
+
+interface Player {
+  id: string
+  name: string
+  isHost: boolean
+  isReady: boolean
+}
+
+interface GameState {
+  playerName: string
+  players: Player[]
+  wordLength: number
+  maxAttempts: number
+  targetWord: string
+  wordHint: string
+  guesses: string[]
+  currentGuess: string
+  status: 'playing' | 'won' | 'lost'
+  difficulty: Difficulty
+  hintsUsed: number
+  faqTaps: number
+  bgMode: number
+  useTimer: boolean
+  godMode: boolean
+  wordStartTime: number
+  multiplayerRoomId: string | null
+  isHost: boolean
+  
+  // Actions
+  setPlayerName: (name: string) => void
+  setReady: (id: string, ready: boolean) => void
+  initGame: (difficulty: Difficulty, word: string, hint: string, useTimer?: boolean, roomId?: string | null, isHost?: boolean) => void
+  addLetter: (letter: string) => void
+  removeLetter: () => void
+  submitGuess: () => boolean
+  tapFaq: () => boolean 
+  cycleBg: () => void
+  setTimerOption: (val: boolean) => void
+  setWordLength: (len: number) => void
+  resetWordTimer: () => void
+}
+
+export const useGameStore = create<GameState>((set, get) => ({
+  playerName: 'NEURAL_UNIT_' + Math.floor(Math.random() * 999),
+  players: [],
+  wordLength: 5,
+  maxAttempts: 6,
+  targetWord: '',
+  wordHint: '',
+  guesses: [],
+  currentGuess: '',
+  status: 'playing',
+  difficulty: 'Normal',
+  hintsUsed: 0,
+  faqTaps: 0,
+  bgMode: 0,
+  useTimer: true,
+  godMode: false,
+  wordStartTime: Date.now(),
+  multiplayerRoomId: null,
+  isHost: true,
+
+  setPlayerName: (name) => set({ playerName: name }),
+
+  setReady: (id, ready) => set((state) => ({
+    players: state.players.map(p => p.id === id ? { ...p, isReady: ready } : p)
+  })),
+
+  initGame: (difficulty, word, hint, useTimer = true, roomId = null, isHost = true) => {
+    let maxAttempts = 6
+    if (difficulty === 'Asian') maxAttempts = 5
+
+    const playerName = get().playerName
+    // Initialize players list
+    const players: Player[] = [
+        { id: 'me', name: playerName, isHost, isReady: isHost } // Host is always ready by default or needs to wait
+    ]
+    
+    if (!isHost) {
+        // If I am guest, add a simulated host
+        players.unshift({ id: 'host', name: 'CORE_SYSTEM', isHost: true, isReady: true })
+    } else if (roomId) {
+        // If I am host and in a room, add a simulated guest
+        players.push({ id: 'guest_sim', name: 'WAITING_GUEST...', isHost: false, isReady: false })
+    }
+
+    set({
+      difficulty,
+      targetWord: word.toUpperCase(),
+      wordHint: hint,
+      wordLength: word.length,
+      maxAttempts,
+      guesses: [],
+      currentGuess: '',
+      status: 'playing',
+      hintsUsed: 0,
+      useTimer,
+      godMode: false,
+      wordStartTime: Date.now(),
+      multiplayerRoomId: roomId,
+      isHost: isHost,
+      players: players
+    })
+  },
+
+  addLetter: (letter) => {
+    const { currentGuess, wordLength, status } = get()
+    if (status !== 'playing') return
+    if (currentGuess.length < wordLength) {
+      set({ currentGuess: currentGuess + letter.toUpperCase() })
+    }
+  },
+
+  removeLetter: () => {
+    const { currentGuess, status } = get()
+    if (status !== 'playing') return
+    set({ currentGuess: currentGuess.slice(0, -1) })
+  },
+
+  submitGuess: () => {
+    const { currentGuess, wordLength, guesses, targetWord, maxAttempts, status } = get()
+    if (status !== 'playing' || currentGuess.length !== wordLength) return false
+
+    const newGuesses = [...guesses, currentGuess]
+    let newStatus: 'playing' | 'won' | 'lost' = 'playing'
+
+    if (currentGuess === targetWord) newStatus = 'won'
+    else if (newGuesses.length >= maxAttempts) newStatus = 'lost'
+
+    set({ guesses: newGuesses, currentGuess: '', status: newStatus })
+    return true
+  },
+
+  tapFaq: () => {
+    const { faqTaps } = get()
+    const nextTaps = faqTaps + 1
+    set({ faqTaps: nextTaps })
+    if (nextTaps >= 5) {
+      set({ godMode: true })
+      return true
+    }
+    return false
+  },
+
+  cycleBg: () => set((state) => ({ bgMode: (state.bgMode + 1) % 50 })),
+  setTimerOption: (val) => set({ useTimer: val }),
+  setWordLength: (len) => set({ wordLength: len }),
+  resetWordTimer: () => set({ wordStartTime: Date.now() })
+}))
