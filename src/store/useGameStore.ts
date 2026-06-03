@@ -104,13 +104,23 @@ export const useGameStore = create<GameState>((set, get) => ({
       players: state.players.filter(p => p.id !== id)
   })),
 
-  setPlayers: (players) => set({ players }),
+  setPlayers: (players) => set((state) => {
+    const merged = players.map(p => {
+        const existing = state.players.find(ep => ep.id === p.id)
+        return {
+            ...p,
+            gridState: existing?.gridState || [],
+            currentGuess: existing?.currentGuess || ''
+        }
+    })
+    return { players: merged }
+  }),
 
   initGame: (difficulty, word, hint, useTimer = true, roomId = null, isHost = true) => {
     let maxAttempts = 6
     if (difficulty === 'Asian') maxAttempts = 5
 
-    set({
+    set((state) => ({
       difficulty,
       targetWord: word.toUpperCase(),
       wordHint: hint,
@@ -121,13 +131,15 @@ export const useGameStore = create<GameState>((set, get) => ({
       status: 'playing',
       hintsUsed: 0,
       useTimer,
-      godMode: get().godMode, 
+      godMode: state.godMode, 
       wordStartTime: Date.now(),
       multiplayerRoomId: roomId,
       isHost: isHost,
-      players: [], 
+      players: roomId 
+        ? state.players.map(p => ({ ...p, gridState: [], currentGuess: '', isReady: false })) 
+        : [{ id: 'me', name: state.playerName, isHost: true, isReady: true }], 
       faqTaps: 0 
-    })
+    }))
   },
 
   addLetter: (letter) => {

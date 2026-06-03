@@ -110,7 +110,7 @@ function App() {
   }, [currentGuess, guesses, multiplayerRoomId, view, sessionId])
 
   useEffect(() => {
-    const params = newSearchParams(window.location.search)
+    const params = new URLSearchParams(window.location.search)
     const roomId = params.get('room')
     if (roomId && view === 'home') {
       initGame('Normal', '', '', true, roomId, false)
