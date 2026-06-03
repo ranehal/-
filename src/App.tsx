@@ -79,16 +79,17 @@ function App() {
     return () => { channel.unsubscribe() }
   }, [multiplayerRoomId, playerName, isHost, setPlayers, updatePlayerGrid, setView, initGame])
 
-  // Broadcast local grid changes AND typing progress
+  // BROADCAST LOOP: Using a separate effect for high-frequency typing sync
   useEffect(() => {
-      if (multiplayerRoomId && view === 'game') {
-          supabase.channel(`room_${multiplayerRoomId}`).send({
-              type: 'broadcast',
-              event: 'sync_grid',
-              payload: { playerName, guesses, currentGuess }
-          })
-      }
-  }, [guesses, currentGuess, multiplayerRoomId, view, playerName])
+      if (!multiplayerRoomId || view !== 'game') return
+      
+      const channel = supabase.channel(`room_${multiplayerRoomId}`)
+      channel.send({
+          type: 'broadcast',
+          event: 'sync_grid',
+          payload: { playerName, guesses, currentGuess }
+      })
+  }, [currentGuess, guesses, multiplayerRoomId, view, playerName])
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)

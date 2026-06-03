@@ -50,8 +50,10 @@ interface GameState {
   resetWordTimer: () => void
 }
 
+const FRUITS = ['APPLE', 'MANGO', 'CHERRY', 'BANANA', 'PAPAYA', 'BERRY', 'MELON', 'PEACH', 'GRAPE', 'KIWI', 'LEMON', 'LIME', 'COCO', 'FIG', 'PLUM']
+
 export const useGameStore = create<GameState>((set, get) => ({
-  playerName: 'NEURAL_UNIT_' + Math.floor(Math.random() * 999),
+  playerName: FRUITS[Math.floor(Math.random() * FRUITS.length)] + '_' + Math.floor(Math.random() * 99),
   players: [],
   wordLength: 5,
   maxAttempts: 6,
@@ -76,9 +78,18 @@ export const useGameStore = create<GameState>((set, get) => ({
     players: state.players.map(p => p.id === id ? { ...p, isReady: ready } : p)
   })),
 
-  updatePlayerGrid: (id, guesses, currentGuess) => set((state) => ({
-    players: state.players.map(p => p.id === id ? { ...p, gridState: guesses, currentGuess: currentGuess ?? p.currentGuess } : p)
-  })),
+  updatePlayerGrid: (id, guesses, currentGuess) => set((state) => {
+    const playerIndex = state.players.findIndex(p => p.id === id)
+    if (playerIndex === -1) return state
+    
+    const newPlayers = [...state.players]
+    newPlayers[playerIndex] = { 
+        ...newPlayers[playerIndex], 
+        gridState: guesses, 
+        currentGuess: currentGuess ?? newPlayers[playerIndex].currentGuess 
+    }
+    return { players: newPlayers }
+  }),
 
   addPlayer: (player) => set((state) => {
       if (state.players.find(p => p.id === player.id)) return state
