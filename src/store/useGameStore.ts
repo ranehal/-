@@ -35,6 +35,9 @@ interface GameState {
   setPlayerName: (name: string) => void
   setReady: (id: string, ready: boolean) => void
   updatePlayerGrid: (id: string, guesses: string[]) => void // Sync POV
+  addPlayer: (player: Player) => void
+  removePlayer: (id: string) => void
+  setPlayers: (players: Player[]) => void
   initGame: (difficulty: Difficulty, word: string, hint: string, useTimer?: boolean, roomId?: string | null, isHost?: boolean) => void
   addLetter: (letter: string) => void
   removeLetter: () => void
@@ -75,6 +78,17 @@ export const useGameStore = create<GameState>((set, get) => ({
   updatePlayerGrid: (id, guesses) => set((state) => ({
     players: state.players.map(p => p.id === id ? { ...p, gridState: guesses } : p)
   })),
+
+  addPlayer: (player) => set((state) => {
+      if (state.players.find(p => p.id === player.id)) return state
+      return { players: [...state.players, player] }
+  }),
+
+  removePlayer: (id) => set((state) => ({
+      players: state.players.filter(p => p.id !== id)
+  })),
+
+  setPlayers: (players) => set({ players }),
 
   initGame: (difficulty, word, hint, useTimer = true, roomId = null, isHost = true) => {
     let maxAttempts = 6

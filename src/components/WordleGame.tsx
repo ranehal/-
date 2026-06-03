@@ -70,20 +70,20 @@ const triggerHaptic = (type: 'light' | 'medium' | 'success' | 'error' = 'light')
 const MiniCell = ({ status }: { status: LetterStatus }) => {
     const getStatusColor = () => {
         switch (status) {
-            case 'correct': return 'bg-chaos-green'
-            case 'present': return 'bg-chaos-yellow'
+            case 'correct': return 'bg-chaos-green shadow-[0_0_5px_rgba(0,255,136,0.5)]'
+            case 'present': return 'bg-chaos-yellow shadow-[0_0_5px_rgba(255,255,0,0.3)]'
             case 'absent': return 'bg-chaos-gray'
             default: return 'bg-white/5'
         }
     }
-    return <div className={`w-3 h-3 rounded-sm ${getStatusColor()} transition-colors duration-500`} />
+    return <div className={`w-5 h-5 rounded-md ${getStatusColor()} transition-colors duration-500`} />
 }
 
 const MiniGrid = ({ guesses, targetWord, difficulty, maxAttempts }: { guesses: string[], targetWord: string, difficulty: string, maxAttempts: number }) => {
     return (
-        <div className="flex flex-col gap-1 p-3 glass-panel border-white/5 bg-white/5 rounded-2xl">
+        <div className="flex flex-col gap-1.5 p-4 glass-panel border-white/10 bg-white/5 rounded-3xl shadow-2xl">
             {Array.from({ length: maxAttempts }).map((_, i) => (
-                <div key={i} className="flex gap-1">
+                <div key={i} className="flex gap-1.5">
                     {Array.from({ length: targetWord.length }).map((_, j) => {
                         const word = guesses[i] || ''
                         const letter = word[j] || ''

@@ -17,6 +17,8 @@ const INTERACTIVE_VARIANTS = {
   hover: { scale: 1.05, filter: "brightness(1.2)" }
 }
 
+import { supabase } from './utils/supabase'
+
 function App() {
   const [view, setView] = useState<'home' | 'game' | 'multiplayer-lobby' | 'stats'>('home')
   const [difficulty, setDifficulty] = useState<Difficulty>('Normal')
@@ -25,7 +27,8 @@ function App() {
   
   const { 
     initGame, bgMode, cycleBg, useTimer, setTimerOption, 
-    multiplayerRoomId, godMode, tapFaq, isHost, playerName, setPlayerName, players, setReady
+    multiplayerRoomId, godMode, tapFaq, isHost, playerName, setPlayerName, players, setReady,
+    updatePlayerGrid, setPlayers, guesses, targetWord, wordHint
   } = useGameStore()
   
   const { gamesPlayed, gamesWon, currentStreak, maxStreak, history } = useStatsStore()
@@ -37,29 +40,65 @@ function App() {
     return () => clearInterval(timer)
   }, [])
 
+  // SUPABASE REALTIME SYNC
+  useEffect(() => {
+    if (!multiplayerRoomId) return
+
+    const channel = supabase.channel(`room_${multiplayerRoomId}`, {
+        config: { broadcast: { self: false }, presence: { key: playerName } }
+    })
+
+    channel
+        .on('presence', { event: 'sync' }, () => {
+            const state = channel.presenceState()
+            const syncedPlayers = Object.entries(state).map(([key, val]: [string, any]) => ({
+                id: key,
+                name: key,
+                isHost: val[0]?.isHost || false,
+                isReady: val[0]?.isReady || false,
+                gridState: val[0]?.gridState || []
+            }))
+            setPlayers(syncedPlayers)
+        })
+        .on('broadcast', { event: 'sync_view' }, ({ payload }) => {
+            if (payload.view === 'game') {
+                initGame(payload.difficulty, payload.word, payload.hint, payload.useTimer, multiplayerRoomId, isHost)
+                setView('game')
+            }
+        })
+        .on('broadcast', { event: 'sync_grid' }, ({ payload }) => {
+            updatePlayerGrid(payload.playerName, payload.guesses)
+        })
+        .subscribe(async (status) => {
+            if (status === 'SUBSCRIBED') {
+                await channel.track({ isHost, isReady: isHost, playerName })
+            }
+        })
+
+    return () => { channel.unsubscribe() }
+  }, [multiplayerRoomId, playerName, isHost, setPlayers, updatePlayerGrid, setView, initGame])
+
+  // Broadcast local grid changes
+  useEffect(() => {
+      if (multiplayerRoomId && view === 'game') {
+          supabase.channel(`room_${multiplayerRoomId}`).send({
+              type: 'broadcast',
+              event: 'sync_grid',
+              payload: { playerName, guesses }
+          })
+      }
+  }, [guesses, multiplayerRoomId, view, playerName])
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const roomId = params.get('room')
     if (roomId && view === 'home') {
-      const wordData = getRandomWord('Normal', 5)
-      initGame('Normal', wordData.word, wordData.hint, true, roomId, false)
+      // For guests, we don't know the word yet. We wait for host to sync_view or we fetch room data.
+      // For this prototype, we'll just join the lobby.
+      initGame('Normal', '', '', true, roomId, false)
       setView('multiplayer-lobby')
     }
   }, [])
-
-  // Auto-ready guest simulation for the host so they don't wait forever
-  useEffect(() => {
-    if (view === 'multiplayer-lobby' && isHost) {
-      const guestSim = players.find(p => p.id === 'guest_sim' && !p.isReady)
-      if (guestSim) {
-        const timer = setTimeout(() => {
-          setReady('guest_sim', true)
-          audio.play('click')
-        }, 3000)
-        return () => clearTimeout(timer)
-      }
-    }
-  }, [view, isHost, players, setReady])
 
   const startGame = () => {
     audio.play('win')
@@ -76,6 +115,26 @@ function App() {
     setView('multiplayer-lobby')
   }
 
+  const startMultiplayerBattle = () => {
+      const wordData = getRandomWord(difficulty, tempWordLen)
+      initGame(difficulty, wordData.word, wordData.hint, useTimer, multiplayerRoomId, true)
+      
+      // Broadcast to all guests
+      supabase.channel(`room_${multiplayerRoomId}`).send({
+          type: 'broadcast',
+          event: 'sync_view',
+          payload: { 
+              view: 'game', 
+              difficulty, 
+              word: wordData.word, 
+              hint: wordData.hint, 
+              useTimer 
+          }
+      })
+      
+      setView('game')
+  }
+
   const copyRoomLink = () => {
     if (!multiplayerRoomId) return
     // Respect the base path from Vite config if it exists
@@ -84,15 +143,6 @@ function App() {
     navigator.clipboard.writeText(url)
     audio.play('click')
     alert(`Link Copied: ${multiplayerRoomId}`)
-  }
-
-  // Simulation: Toggle Guest Ready (for local prototype testing)
-  const toggleGuestReadySim = () => {
-    const guest = players.find(p => !p.isHost)
-    if (guest) {
-        setReady(guest.id, !guest.isReady)
-        audio.play('click')
-    }
   }
 
   const allPlayersReady = players.length > 1 && players.every(p => p.isReady)
@@ -320,7 +370,7 @@ function App() {
                     <motion.button 
                         whileHover={allPlayersReady ? INTERACTIVE_VARIANTS.hover : {}}
                         whileTap={allPlayersReady ? INTERACTIVE_VARIANTS.tap : {}}
-                        onClick={() => allPlayersReady && setView('game')}
+                        onClick={() => allPlayersReady && startMultiplayerBattle()}
                         disabled={!allPlayersReady}
                         className={`py-5 rounded-[2rem] flex items-center justify-center gap-3 font-black transition-all shadow-xl ${allPlayersReady ? 'bg-chaos-green text-black shadow-chaos-green/30' : 'bg-white/5 text-gray-500 cursor-not-allowed border border-white/5'}`}
                     >
@@ -330,14 +380,20 @@ function App() {
                     <motion.button 
                         whileHover={INTERACTIVE_VARIANTS.hover}
                         whileTap={INTERACTIVE_VARIANTS.tap}
-                        onClick={() => {
-                            const me = players.find(p => p.id === 'me')
-                            if (me) setReady('me', !me.isReady)
-                            audio.play('click')
+                        onClick={async () => {
+                            const me = players.find(p => p.id === playerName)
+                            if (me) {
+                                const newReady = !me.isReady
+                                setReady(playerName, newReady)
+                                // Track updated state in Supabase Presence
+                                const channel = supabase.channel(`room_${multiplayerRoomId}`)
+                                await channel.track({ isHost, isReady: newReady, playerName })
+                                audio.play('click')
+                            }
                         }}
-                        className={`py-5 rounded-[2rem] flex items-center justify-center gap-3 font-black transition-all shadow-xl ${players.find(p => p.id === 'me')?.isReady ? 'bg-chaos-green text-black' : 'bg-white/10 text-white'}`}
+                        className={`py-5 rounded-[2rem] flex items-center justify-center gap-3 font-black transition-all shadow-xl ${players.find(p => p.id === playerName)?.isReady ? 'bg-chaos-green text-black' : 'bg-white/10 text-white'}`}
                     >
-                        <CheckCircle2 size={20} /> {players.find(p => p.id === 'me')?.isReady ? 'READY' : 'GO READY'}
+                        <CheckCircle2 size={20} /> {players.find(p => p.id === playerName)?.isReady ? 'READY' : 'GO READY'}
                     </motion.button>
                 )}
             </div>
