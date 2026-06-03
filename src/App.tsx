@@ -78,7 +78,9 @@ function App() {
 
   const copyRoomLink = () => {
     if (!multiplayerRoomId) return
-    const url = `${window.location.origin}?room=${multiplayerRoomId}`
+    // Respect the base path from Vite config if it exists
+    const baseUrl = window.location.origin + window.location.pathname.replace(/\/$/, '')
+    const url = `${baseUrl}?room=${multiplayerRoomId}`
     navigator.clipboard.writeText(url)
     audio.play('click')
     alert(`Link Copied: ${multiplayerRoomId}`)
