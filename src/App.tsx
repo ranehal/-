@@ -98,39 +98,21 @@ function App() {
     }
   }, [multiplayerRoomId, playerName, isHost, setPlayers, updatePlayerGrid, setView, initGame, sessionId])
 
-  // BROADCAST LOOP: Throttled for performance
-  const lastSyncTime = useRef(0)
+  // BROADCAST LOOP: High-frequency sync
   useEffect(() => {
       if (!multiplayerRoomId || view !== 'game' || !channelRef.current) return
       
-      const now = Date.now()
-      if (now - lastSyncTime.current < 200) {
-          const timer = setTimeout(() => {
-              if (channelRef.current) {
-                  channelRef.current.send({
-                      type: 'broadcast',
-                      event: 'sync_grid',
-                      payload: { playerName: sessionId, guesses, currentGuess }
-                  })
-              }
-          }, 200)
-          return () => clearTimeout(timer)
-      }
-
       channelRef.current.send({
           type: 'broadcast',
           event: 'sync_grid',
           payload: { playerName: sessionId, guesses, currentGuess }
       })
-      lastSyncTime.current = now
   }, [currentGuess, guesses, multiplayerRoomId, view, sessionId])
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const roomId = params.get('room')
     if (roomId && view === 'home') {
-      // For guests, we don't know the word yet. We wait for host to sync_view or we fetch room data.
-      // For this prototype, we'll just join the lobby.
       initGame('Normal', '', '', true, roomId, false)
       setView('multiplayer-lobby')
     }
@@ -184,54 +166,55 @@ function App() {
   const allPlayersReady = players.length > 1 && players.every(p => p.isReady)
 
   return (
-    <div className="min-h-screen w-screen flex items-center justify-center p-4 relative overflow-hidden bg-[#050505] text-white">
+    <div className="min-h-screen w-screen flex flex-col items-center justify-center p-4 relative overflow-x-hidden bg-[#050505] text-white">
       <ShaderBackground mode={bgMode} />
       
-      {/* Global Bottom Utility Buttons - THE BG CHANGER IS HERE */}
-      <div className="fixed bottom-8 left-8 z-[100] flex gap-4 items-center">
-        <div className="flex flex-col items-center gap-2">
-            <span className="text-[9px] font-black text-chaos-green tracking-widest uppercase">BG_SYNC</span>
-            <motion.button 
-                whileHover={INTERACTIVE_VARIANTS.hover}
-                whileTap={INTERACTIVE_VARIANTS.tap}
-                onClick={() => { audio.play('click'); cycleBg(); }}
-                className="p-5 glass-panel rounded-3xl border-white/10 hover:bg-chaos-green/20 transition-all group shadow-2xl"
-            >
-                <Layers size={24} className="group-hover:text-chaos-green transition-colors" />
-            </motion.button>
-        </div>
-        
-        <div className="flex flex-col items-center gap-2">
-            <span className="text-[9px] font-black text-gray-500 tracking-widest uppercase">INFO_CORE</span>
-            <motion.button 
-                whileHover={INTERACTIVE_VARIANTS.hover}
-                whileTap={INTERACTIVE_VARIANTS.tap}
-                onClick={() => { audio.play('click'); tapFaq(); setShowFaq(true); }}
-                className={`p-5 glass-panel rounded-3xl border-white/10 transition-all group ${godMode ? 'text-chaos-red animate-pulse' : ''}`}
-            >
-                <Info size={24} />
-            </motion.button>
-        </div>
-      </div>
-
-      <div className="fixed top-8 left-8 z-[100]">
+      {/* Global Navigation */}
+      <div className="fixed top-4 left-4 sm:top-8 sm:left-8 z-[100]">
         <AnimatePresence>
             {view !== 'home' && (
                 <motion.button
                     initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
                     whileHover={INTERACTIVE_VARIANTS.hover} whileTap={INTERACTIVE_VARIANTS.tap}
                     onClick={goHome}
-                    className="p-5 glass-panel rounded-3xl border-white/10 hover:bg-chaos-red/20 transition-all group shadow-2xl flex items-center gap-3"
+                    className="p-4 sm:p-5 glass-panel rounded-2xl sm:rounded-3xl border-white/10 hover:bg-chaos-red/20 transition-all group shadow-2xl flex items-center gap-2 sm:gap-3"
                 >
-                    <ArrowLeft size={24} className="group-hover:text-chaos-red transition-colors" />
-                    <span className="font-black text-[10px] tracking-widest uppercase">DISCONNECT</span>
+                    <ArrowLeft size={18} className="sm:w-6 sm:h-6 group-hover:text-chaos-red transition-colors" />
+                    <span className="font-black text-[8px] sm:text-[10px] tracking-widest uppercase">DISCONNECT</span>
                 </motion.button>
             )}
         </AnimatePresence>
       </div>
 
-      <div className="fixed top-8 right-8 font-mono text-chaos-green/40 text-[10px] tracking-[0.5em] z-50">
+      <div className="fixed top-4 right-4 sm:top-8 sm:right-8 font-mono text-chaos-green/40 text-[8px] sm:text-[10px] tracking-[0.3em] sm:tracking-[0.5em] z-50">
         RT_{currentTime}
+      </div>
+
+      {/* Global Utilities */}
+      <div className="fixed bottom-4 left-4 sm:bottom-8 sm:left-8 z-[100] flex gap-2 sm:gap-4 items-center">
+        <div className="flex flex-col items-center gap-1 sm:gap-2">
+            <span className="text-[7px] sm:text-[9px] font-black text-chaos-green tracking-widest uppercase">BG_SYNC</span>
+            <motion.button 
+                whileHover={INTERACTIVE_VARIANTS.hover}
+                whileTap={INTERACTIVE_VARIANTS.tap}
+                onClick={() => { audio.play('click'); cycleBg(); }}
+                className="p-4 sm:p-5 glass-panel rounded-2xl sm:rounded-3xl border-white/10 hover:bg-chaos-green/20 transition-all group shadow-2xl"
+            >
+                <Layers size={18} className="sm:w-6 sm:h-6 group-hover:text-chaos-green transition-colors" />
+            </motion.button>
+        </div>
+        
+        <div className="flex flex-col items-center gap-1 sm:gap-2">
+            <span className="text-[7px] sm:text-[9px] font-black text-gray-500 tracking-widest uppercase">INFO_CORE</span>
+            <motion.button 
+                whileHover={INTERACTIVE_VARIANTS.hover}
+                whileTap={INTERACTIVE_VARIANTS.tap}
+                onClick={() => { audio.play('click'); tapFaq(); setShowFaq(true); }}
+                className={`p-4 sm:p-5 glass-panel rounded-2xl sm:rounded-3xl border-white/10 transition-all group ${godMode ? 'text-chaos-red animate-pulse' : ''}`}
+            >
+                <Info size={18} className="sm:w-6 sm:h-6" />
+            </motion.button>
+        </div>
       </div>
 
       <AnimatePresence mode="wait">
@@ -239,19 +222,18 @@ function App() {
           <motion.div
             key="home"
             initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 1.1 }}
-            className="glass-panel p-10 rounded-[3rem] max-w-md w-full text-center space-y-10 relative z-10 border-white/5 shadow-2xl"
+            className="glass-panel p-6 sm:p-10 rounded-[2rem] sm:rounded-[3rem] max-w-md w-full text-center space-y-6 sm:space-y-10 relative z-10 border-white/5 shadow-2xl"
           >
             <div className="space-y-4">
               <motion.h1 
                 whileHover={{ scale: 1.1, skewX: [0, -5, 5, 0], color: ["#ffffff", "#00ff88", "#ff3366", "#ffffff"] }}
                 transition={{ duration: 0.5 }}
-                className="text-8xl font-black italic tracking-tighter neon-text leading-none font-serif cursor-pointer select-none"
+                className="text-6xl sm:text-8xl font-black italic tracking-tighter neon-text leading-none font-serif cursor-pointer select-none"
                 style={{ fontFamily: 'Georgia, serif' }}
               >
                 শব্দদোষ
               </motion.h1>
               
-              {/* Manual Player Name Input */}
               <div className="relative group max-w-xs mx-auto">
                 <UserCircle2 className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-chaos-green" size={18} />
                 <input 
@@ -259,7 +241,7 @@ function App() {
                     value={playerName}
                     onChange={(e) => setPlayerName(e.target.value.toUpperCase())}
                     placeholder="ENTER_NAME"
-                    className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl outline-none focus:border-chaos-green/50 focus:bg-white/10 transition-all font-mono text-sm tracking-widest text-center"
+                    className="w-full pl-10 sm:pl-12 pr-4 py-3 sm:py-4 bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl outline-none focus:border-chaos-green/50 focus:bg-white/10 transition-all font-mono text-xs sm:text-sm tracking-widest text-center"
                 />
               </div>
             </div>
@@ -269,51 +251,51 @@ function App() {
                 <motion.button 
                   whileHover={INTERACTIVE_VARIANTS.hover} whileTap={INTERACTIVE_VARIANTS.tap}
                   onClick={() => { audio.play('click'); setDifficulty(difficulty === 'EZ' ? 'Normal' : difficulty === 'Normal' ? 'Asian' : 'EZ'); }}
-                  className="glass-panel p-3 rounded-2xl flex flex-col items-center justify-center hover:bg-white/5 border-white/5"
+                  className="glass-panel p-2 sm:p-3 rounded-xl sm:rounded-2xl flex flex-col items-center justify-center hover:bg-white/5 border-white/5"
                 >
-                  <span className="text-[8px] text-gray-400 font-bold uppercase mb-1">Risk</span>
-                  <span className={`font-black text-[10px] ${difficulty === 'Asian' ? 'text-chaos-red' : 'text-white'}`}>{difficulty.toUpperCase()}</span>
+                  <span className="text-[7px] sm:text-[8px] text-gray-400 font-bold uppercase mb-1">Risk</span>
+                  <span className={`font-black text-[9px] sm:text-[10px] ${difficulty === 'Asian' ? 'text-chaos-red' : 'text-white'}`}>{difficulty.toUpperCase()}</span>
                 </motion.button>
 
                 <motion.button 
                   whileHover={INTERACTIVE_VARIANTS.hover} whileTap={INTERACTIVE_VARIANTS.tap}
                   onClick={() => { audio.play('click'); setTimerOption(!useTimer); }}
-                  className="glass-panel p-3 rounded-2xl flex flex-col items-center justify-center hover:bg-white/5 border-white/5"
+                  className="glass-panel p-2 sm:p-3 rounded-xl sm:rounded-2xl flex flex-col items-center justify-center hover:bg-white/5 border-white/5"
                 >
-                  <span className="text-[8px] text-gray-400 font-bold uppercase mb-1">Sync</span>
-                  {useTimer ? <Timer size={14} className="text-chaos-green" /> : <TimerOff size={14} className="text-chaos-red" />}
+                  <span className="text-[7px] sm:text-[8px] text-gray-400 font-bold uppercase mb-1">Sync</span>
+                  {useTimer ? <Timer size={12} className="sm:w-3.5 sm:h-3.5 text-chaos-green" /> : <TimerOff size={12} className="sm:w-3.5 sm:h-3.5 text-chaos-red" />}
                 </motion.button>
 
                 <motion.button 
                   whileHover={INTERACTIVE_VARIANTS.hover} whileTap={INTERACTIVE_VARIANTS.tap}
                   onClick={() => { audio.play('click'); setTempWordLen(tempWordLen >= 9 ? 5 : tempWordLen + 1); }}
-                  className="glass-panel p-3 rounded-2xl flex flex-col items-center justify-center hover:bg-white/5 border-white/5"
+                  className="glass-panel p-2 sm:p-3 rounded-xl sm:rounded-2xl flex flex-col items-center justify-center hover:bg-white/5 border-white/5"
                 >
-                  <span className="text-[8px] text-gray-400 font-bold uppercase mb-1">Len</span>
-                  <div className="flex items-center gap-1 font-black text-[10px]"><Hash size={8} /> {tempWordLen}</div>
+                  <span className="text-[7px] sm:text-[8px] text-gray-400 font-bold uppercase mb-1">Len</span>
+                  <div className="flex items-center gap-1 font-black text-[9px] sm:text-[10px]"><Hash size={8} /> {tempWordLen}</div>
                 </motion.button>
               </div>
 
               <motion.button 
                 whileHover={INTERACTIVE_VARIANTS.hover} whileTap={INTERACTIVE_VARIANTS.tap}
                 onClick={startGame}
-                className="group relative px-6 py-6 bg-white text-black font-black text-xl rounded-2xl flex items-center justify-center gap-3 transition-all shadow-xl"
+                className="group relative px-4 sm:px-6 py-4 sm:py-6 bg-white text-black font-black text-lg sm:text-xl rounded-xl sm:rounded-2xl flex items-center justify-center gap-2 sm:gap-3 transition-all shadow-xl"
               >
-                <Play fill="black" size={24} /> INITIALIZE_SINGLE
+                <Play fill="black" size={20} className="sm:w-6 sm:h-6" /> INITIALIZE_SINGLE
               </motion.button>
 
               <motion.button 
                 whileHover={INTERACTIVE_VARIANTS.hover} whileTap={INTERACTIVE_VARIANTS.tap}
                 onClick={createMultiplayerRoom}
-                className="px-6 py-6 glass-panel border-white/10 hover:bg-white/5 text-white font-black text-xl rounded-2xl flex items-center justify-center gap-3 transition-all"
+                className="px-4 sm:px-6 py-4 sm:py-6 glass-panel border-white/10 hover:bg-white/5 text-white font-black text-lg sm:text-xl rounded-xl sm:rounded-2xl flex items-center justify-center gap-2 sm:gap-3 transition-all"
               >
-                <Users size={24} /> CLUSTER_SYNC
+                <Users size={20} className="sm:w-6 sm:h-6" /> CLUSTER_SYNC
               </motion.button>
             </div>
 
-            <div className="flex justify-center gap-8 pt-4">
-              <motion.button whileHover={INTERACTIVE_VARIANTS.hover} whileTap={INTERACTIVE_VARIANTS.tap} onClick={() => { audio.play('click'); setView('stats'); }} className="p-4 glass-panel rounded-2xl hover:bg-white/10 border-white/5 group">
-                <Trophy size={18} className="group-hover:text-chaos-green" />
+            <div className="flex justify-center gap-8 pt-2 sm:pt-4">
+              <motion.button whileHover={INTERACTIVE_VARIANTS.hover} whileTap={INTERACTIVE_VARIANTS.tap} onClick={() => { audio.play('click'); setView('stats'); }} className="p-3 sm:p-4 glass-panel rounded-xl sm:rounded-2xl hover:bg-white/10 border-white/5 group">
+                <Trophy size={16} className="sm:w-[18px] sm:h-[18px] group-hover:text-chaos-green" />
               </motion.button>
             </div>
           </motion.div>
@@ -323,45 +305,45 @@ function App() {
           <motion.div
             key="stats"
             initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 1.1 }}
-            className="glass-panel p-10 rounded-[3rem] max-w-lg w-full text-center space-y-8 z-10 border-white/5 shadow-2xl relative"
+            className="glass-panel p-6 sm:p-10 rounded-[2rem] sm:rounded-[3rem] max-w-lg w-full text-center space-y-6 sm:space-y-8 z-10 border-white/5 shadow-2xl relative"
           >
             <div className="space-y-2">
-              <h2 className="text-5xl font-black italic tracking-tighter uppercase text-chaos-green">Global Sync</h2>
-              <p className="text-[10px] text-gray-500 font-mono tracking-widest uppercase">Player Records & Leaderboard</p>
+              <h2 className="text-3xl sm:text-5xl font-black italic tracking-tighter uppercase text-chaos-green">Global Sync</h2>
+              <p className="text-[8px] sm:text-[10px] text-gray-500 font-mono tracking-widest uppercase">Player Records & Leaderboard</p>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-               <div className="bg-white/5 p-6 rounded-3xl border border-white/5">
-                  <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-2">Win Rate</div>
-                  <div className="text-4xl font-black text-white">{gamesPlayed > 0 ? Math.round((gamesWon/gamesPlayed)*100) : 0}%</div>
+            <div className="grid grid-cols-2 gap-3 sm:gap-4">
+               <div className="bg-white/5 p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-white/5">
+                  <div className="text-[8px] sm:text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1 sm:mb-2">Win Rate</div>
+                  <div className="text-2xl sm:text-4xl font-black text-white">{gamesPlayed > 0 ? Math.round((gamesWon/gamesPlayed)*100) : 0}%</div>
                </div>
-               <div className="bg-white/5 p-6 rounded-3xl border border-white/5">
-                  <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-2">Max Streak</div>
-                  <div className="text-4xl font-black text-chaos-green">{maxStreak}</div>
+               <div className="bg-white/5 p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-white/5">
+                  <div className="text-[8px] sm:text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1 sm:mb-2">Max Streak</div>
+                  <div className="text-2xl sm:text-4xl font-black text-chaos-green">{maxStreak}</div>
                </div>
-               <div className="bg-white/5 p-6 rounded-3xl border border-white/5">
-                  <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-2">Played</div>
-                  <div className="text-4xl font-black">{gamesPlayed}</div>
+               <div className="bg-white/5 p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-white/5">
+                  <div className="text-[8px] sm:text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1 sm:mb-2">Played</div>
+                  <div className="text-2xl sm:text-4xl font-black">{gamesPlayed}</div>
                </div>
-               <div className="bg-white/5 p-6 rounded-3xl border border-white/5">
-                  <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-2">Cur Streak</div>
-                  <div className="text-4xl font-black text-chaos-red">{currentStreak}</div>
+               <div className="bg-white/5 p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-white/5">
+                  <div className="text-[8px] sm:text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1 sm:mb-2">Cur Streak</div>
+                  <div className="text-2xl sm:text-4xl font-black text-chaos-red">{currentStreak}</div>
                </div>
             </div>
 
-            <div className="space-y-4 text-left">
-                <h3 className="text-sm font-black tracking-widest uppercase text-gray-500 border-b border-white/5 pb-2">Recent Decryptions</h3>
-                <div className="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
-                    {history.length === 0 && <p className="text-xs text-gray-600 italic">No decryptions logged.</p>}
+            <div className="space-y-3 sm:space-y-4 text-left">
+                <h3 className="text-xs sm:text-sm font-black tracking-widest uppercase text-gray-500 border-b border-white/5 pb-2">Recent Decryptions</h3>
+                <div className="space-y-2 max-h-40 sm:max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+                    {history.length === 0 && <p className="text-[10px] sm:text-xs text-gray-600 italic">No decryptions logged.</p>}
                     {history.map(match => (
-                        <div key={match.id} className="flex justify-between items-center bg-white/5 p-4 rounded-xl border border-white/5">
+                        <div key={match.id} className="flex justify-between items-center bg-white/5 p-3 sm:p-4 rounded-lg sm:rounded-xl border border-white/5">
                             <div>
-                                <span className={`font-black tracking-widest uppercase mr-2 ${match.won ? 'text-chaos-green' : 'text-chaos-red'}`}>{match.word}</span>
-                                <span className="text-[9px] text-gray-500 font-mono">[{match.difficulty}]</span>
+                                <span className={`font-black tracking-widest uppercase text-xs sm:text-sm mr-2 ${match.won ? 'text-chaos-green' : 'text-chaos-red'}`}>{match.word}</span>
+                                <span className="text-[7px] sm:text-[9px] text-gray-500 font-mono">[{match.difficulty}]</span>
                             </div>
                             <div className="text-right">
-                                <div className="text-xs font-bold">{match.time}</div>
-                                <div className="text-[9px] text-gray-500 font-mono">Atmpts: {match.attempts}</div>
+                                <div className="text-[10px] sm:text-xs font-bold">{match.time}</div>
+                                <div className="text-[7px] sm:text-[9px] text-gray-500 font-mono">Atmpts: {match.attempts}</div>
                             </div>
                         </div>
                     ))}
@@ -374,48 +356,48 @@ function App() {
           <motion.div
             key="lobby"
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
-            className="glass-panel p-12 rounded-[4rem] max-w-lg w-full text-center space-y-8 z-10 border-white/5 shadow-2xl"
+            className="glass-panel p-8 sm:p-12 rounded-[2.5rem] sm:rounded-[4rem] max-w-lg w-full text-center space-y-6 sm:space-y-8 z-10 border-white/5 shadow-2xl"
           >
-            <div className="space-y-3">
-              <h2 className="text-4xl font-black italic tracking-tighter uppercase">Cluster Network</h2>
-              <div className="bg-chaos-green/10 py-2 px-8 rounded-full inline-block border border-chaos-green/20">
-                <span className="font-mono text-chaos-green text-sm font-bold tracking-[0.4em] uppercase">ROOM_{multiplayerRoomId}</span>
+            <div className="space-y-2 sm:space-y-3">
+              <h2 className="text-3xl sm:text-4xl font-black italic tracking-tighter uppercase">Cluster Network</h2>
+              <div className="bg-chaos-green/10 py-1 sm:py-2 px-6 sm:px-8 rounded-full inline-block border border-chaos-green/20">
+                <span className="font-mono text-chaos-green text-xs sm:text-sm font-bold tracking-[0.3em] sm:tracking-[0.4em] uppercase">ROOM_{multiplayerRoomId}</span>
               </div>
             </div>
 
-            <div className="grid gap-4">
+            <div className="grid gap-3 sm:gap-4">
                 {players.map(player => (
                     <motion.div 
                         key={player.id} 
                         initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
-                        className="flex items-center justify-between glass-panel p-6 rounded-3xl border-white/5"
+                        className="flex items-center justify-between glass-panel p-4 sm:p-6 rounded-2xl sm:rounded-3xl border-white/5"
                     >
-                        <div className="flex items-center gap-5">
-                            <div className={`w-14 h-14 ${player.isHost ? 'bg-chaos-green shadow-[0_0_20px_rgba(0,255,136,0.2)]' : 'bg-chaos-red'} rounded-2xl flex items-center justify-center text-black font-black text-2xl`}>
-                              {player.name[0].toUpperCase()}
+                        <div className="flex items-center gap-3 sm:gap-5">
+                            <div className={`w-10 h-10 sm:w-14 sm:h-14 ${player.isHost ? 'bg-chaos-green shadow-[0_0_20px_rgba(0,255,136,0.2)]' : 'bg-chaos-red'} rounded-xl sm:rounded-2xl flex items-center justify-center text-black font-black text-xl sm:text-2xl`}>
+                              {player.name[0]?.toUpperCase() || 'U'}
                             </div>
                             <div className="text-left">
-                                <span className="font-black tracking-tight text-lg block">{player.name.toUpperCase()}</span>
-                                <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{player.isHost ? 'SYSTEM_NODE (HOST)' : 'GUEST_NODE'}</span>
+                                <span className="font-black tracking-tight text-sm sm:text-lg block">{player.name.toUpperCase()}</span>
+                                <span className="text-[7px] sm:text-[10px] text-gray-500 font-bold uppercase tracking-widest">{player.isHost ? 'SYSTEM_NODE (HOST)' : 'GUEST_NODE'}</span>
                             </div>
                         </div>
-                        <div className="flex flex-col items-end gap-2">
-                             <span className={`${player.isReady ? 'text-chaos-green' : 'text-gray-500'} text-[10px] font-black tracking-widest uppercase`}>
+                        <div className="flex flex-col items-end gap-1 sm:gap-2">
+                             <span className={`${player.isReady ? 'text-chaos-green' : 'text-gray-500'} text-[7px] sm:text-[10px] font-black tracking-widest uppercase`}>
                                 {player.isReady ? 'READY_SYNC' : 'WAITING...'}
                              </span>
-                             {player.isReady ? <CheckCircle2 size={18} className="text-chaos-green" /> : <div className="w-4 h-4 rounded-full border-2 border-white/10" />}
+                             {player.isReady ? <CheckCircle2 size={14} className="sm:w-[18px] sm:h-[18px] text-chaos-green" /> : <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full border-2 border-white/10" />}
                         </div>
                     </motion.div>
                 ))}
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4">
                 <motion.button 
                   whileHover={INTERACTIVE_VARIANTS.hover} whileTap={INTERACTIVE_VARIANTS.tap}
                   onClick={copyRoomLink}
-                  className="py-5 glass-panel border-white/10 hover:bg-white/5 rounded-[2rem] flex items-center justify-center gap-3 font-black transition-all text-xs tracking-widest"
+                  className="py-4 sm:py-5 glass-panel border-white/10 hover:bg-white/5 rounded-[1.5rem] sm:rounded-[2rem] flex items-center justify-center gap-2 sm:gap-3 font-black transition-all text-[9px] sm:text-xs tracking-widest"
                 >
-                    <Share2 size={20} /> SYNC LINK
+                    <Share2 size={16} className="sm:w-5 sm:h-5" /> SYNC LINK
                 </motion.button>
                 
                 {isHost ? (
@@ -424,9 +406,9 @@ function App() {
                         whileTap={allPlayersReady ? INTERACTIVE_VARIANTS.tap : {}}
                         onClick={() => allPlayersReady && startMultiplayerBattle()}
                         disabled={!allPlayersReady}
-                        className={`py-5 rounded-[2rem] flex items-center justify-center gap-3 font-black transition-all shadow-xl ${allPlayersReady ? 'bg-chaos-green text-black shadow-chaos-green/30' : 'bg-white/5 text-gray-500 cursor-not-allowed border border-white/5'}`}
+                        className={`py-4 sm:py-5 rounded-[1.5rem] sm:rounded-[2rem] flex items-center justify-center gap-2 sm:gap-3 font-black transition-all shadow-xl ${allPlayersReady ? 'bg-chaos-green text-black shadow-chaos-green/30' : 'bg-white/5 text-gray-500 cursor-not-allowed border border-white/5'}`}
                     >
-                        <Rocket size={20} /> {allPlayersReady ? 'START BATTLE' : 'WAITING GUEST'}
+                        <Rocket size={16} className="sm:w-5 sm:h-5" /> {allPlayersReady ? 'START BATTLE' : 'WAITING GUEST'}
                     </motion.button>
                 ) : (
                     <motion.button 
@@ -436,15 +418,14 @@ function App() {
                             const me = players.find(p => p.id === 'me')
                             if (me && channelRef.current) {
                                 const newReady = !me.isReady
-                                setReady('me', newReady) // Use 'me' to update local store state
-                                // Track updated state in stable Supabase Presence channel
+                                setReady('me', newReady) 
                                 await channelRef.current.track({ isHost, isReady: newReady, playerName })
                                 audio.play('click')
                             }
                         }}
-                        className={`py-5 rounded-[2rem] flex items-center justify-center gap-3 font-black transition-all shadow-xl ${players.find(p => p.id === 'me')?.isReady ? 'bg-chaos-green text-black' : 'bg-white/10 text-white'}`}
+                        className={`py-4 sm:py-5 rounded-[1.5rem] sm:rounded-[2rem] flex items-center justify-center gap-2 sm:gap-3 font-black transition-all shadow-xl ${players.find(p => p.id === 'me')?.isReady ? 'bg-chaos-green text-black' : 'bg-white/10 text-white'}`}
                     >
-                        <CheckCircle2 size={20} /> {players.find(p => p.id === 'me')?.isReady ? 'READY' : 'GO READY'}
+                        <CheckCircle2 size={16} className="sm:w-5 sm:h-5" /> {players.find(p => p.id === 'me')?.isReady ? 'READY' : 'GO READY'}
                     </motion.button>
                 )}
             </div>

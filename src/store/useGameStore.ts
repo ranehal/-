@@ -108,34 +108,26 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (difficulty === 'Asian') maxAttempts = 5
 
     const playerName = get().playerName
-    // Initialize players list
-    const players: Player[] = [
-        { id: 'me', name: playerName, isHost, isReady: isHost }
-    ]
+    // Note: sessionId will be passed from App.tsx via a new setSessionId action or similar
+    // For now, we clear players and let App.tsx presence sync populate the list
     
-    if (!isHost) {
-        players.unshift({ id: 'host', name: 'CORE_SYSTEM', isHost: true, isReady: true })
-    } else if (roomId) {
-        players.push({ id: 'guest_sim', name: 'WAITING_GUEST...', isHost: false, isReady: false })
-    }
-
     set({
       difficulty,
       targetWord: word.toUpperCase(),
       wordHint: hint,
-      wordLength: word.length, // Ensure we use the actual word's length
+      wordLength: word.length, 
       maxAttempts,
       guesses: [],
       currentGuess: '',
       status: 'playing',
       hintsUsed: 0,
       useTimer,
-      godMode: get().godMode, // Persist God Mode if already active from menu
+      godMode: get().godMode, 
       wordStartTime: Date.now(),
       multiplayerRoomId: roomId,
       isHost: isHost,
-      players: players,
-      faqTaps: 0 // Reset Easter egg progress
+      players: [], // Let Supabase Presence take over for multiplayer
+      faqTaps: 0 
     })
   },
 

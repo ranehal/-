@@ -77,7 +77,7 @@ const MiniCell = ({ letter, status }: { letter?: string, status: LetterStatus })
         }
     }
     return (
-        <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl border-2 flex items-center justify-center text-lg sm:text-xl font-black ${getStatusColor()} transition-all duration-300 ${!status || status === 'empty' ? 'shadow-[inset_0_0_10px_rgba(255,255,255,0.05)]' : ''}`}>
+        <div className={`w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-lg sm:rounded-xl border-2 flex items-center justify-center text-sm sm:text-lg md:text-xl font-black ${getStatusColor()} transition-all duration-300 ${!status || status === 'empty' ? 'shadow-[inset_0_0_10px_rgba(255,255,255,0.05)]' : ''}`}>
             {letter?.toUpperCase()}
         </div>
     )
@@ -85,38 +85,32 @@ const MiniCell = ({ letter, status }: { letter?: string, status: LetterStatus })
 
 const MiniGrid = ({ name, guesses, currentGuess, targetWord, difficulty, maxAttempts, isHost }: { name: string, guesses: string[], currentGuess?: string, targetWord: string, difficulty: string, maxAttempts: number, isHost: boolean }) => {
     return (
-        <div className="flex flex-col gap-6 p-10 glass-panel border-white/10 bg-white/[0.03] rounded-[4rem] shadow-2xl scale-95 transition-all border-b-8 border-r-8 relative overflow-hidden group">
+        <div className="flex flex-col gap-3 sm:gap-6 p-6 sm:p-10 glass-panel border-white/10 bg-white/[0.03] rounded-[2rem] sm:rounded-[4rem] shadow-2xl scale-[0.85] sm:scale-90 xl:scale-95 transition-all border-b-4 sm:border-b-8 border-r-4 sm:border-r-8 relative overflow-hidden group">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-chaos-green/20 to-transparent" />
             
             <div className="flex justify-between items-center px-2">
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 sm:gap-4">
                     <div className="relative">
-                        <div className={`w-4 h-4 rounded-full ${isHost ? 'bg-chaos-green' : 'bg-chaos-red'} animate-ping absolute inset-0 opacity-50`} />
-                        <div className={`w-4 h-4 rounded-full ${isHost ? 'bg-chaos-green' : 'bg-chaos-red'} relative z-10`} />
+                        <div className={`w-3 h-3 sm:w-4 sm:h-4 rounded-full ${isHost ? 'bg-chaos-green' : 'bg-chaos-red'} animate-ping absolute inset-0 opacity-50`} />
+                        <div className={`w-3 h-3 sm:w-4 sm:h-4 rounded-full ${isHost ? 'bg-chaos-green' : 'bg-chaos-red'} relative z-10`} />
                     </div>
                     <div className="flex flex-col -space-y-1">
-                        <span className="font-black text-sm tracking-widest text-white uppercase">{name}</span>
-                        <span className="text-[9px] font-bold text-gray-500 uppercase tracking-tighter">NODE_MIRROR_ACTIVE</span>
+                        <span className="font-black text-xs sm:text-sm tracking-widest text-white uppercase">{name}</span>
+                        <span className="text-[7px] sm:text-[9px] font-bold text-gray-500 uppercase tracking-tighter">MIRROR_ACTIVE</span>
                     </div>
-                </div>
-                <div className="flex items-center gap-2 px-3 py-1 bg-chaos-green/10 rounded-full border border-chaos-green/20">
-                    <Zap size={10} className="text-chaos-green animate-pulse" />
-                    <span className="text-[9px] font-black text-chaos-green uppercase tracking-widest">LIVE_SYNC</span>
                 </div>
             </div>
             
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-1.5 sm:gap-3">
                 {Array.from({ length: maxAttempts }).map((_, i) => {
                     const isCurrentRow = i === guesses.length
                     const word = isCurrentRow ? (currentGuess || '') : (guesses[i] || '')
                     const isSubmitted = i < guesses.length
 
                     return (
-                        <motion.div 
+                        <div 
                             key={i} 
-                            animate={isCurrentRow ? { x: [0, -1, 1, 0] } : {}}
-                            transition={{ repeat: Infinity, duration: 2 }}
-                            className={`flex gap-3 justify-center ${isCurrentRow ? 'opacity-100' : isSubmitted ? 'opacity-100' : 'opacity-20'}`}
+                            className={`flex gap-1.5 sm:gap-3 justify-center ${isCurrentRow ? 'opacity-100' : isSubmitted ? 'opacity-100' : 'opacity-20'}`}
                         >
                             {Array.from({ length: targetWord.length }).map((_, j) => {
                                 const letter = word[j] || ''
@@ -130,14 +124,9 @@ const MiniGrid = ({ name, guesses, currentGuess, targetWord, difficulty, maxAtte
 
                                 return <MiniCell key={j} letter={letter} status={status} />
                             })}
-                        </motion.div>
+                        </div>
                     )
                 })}
-            </div>
-
-            <div className="mt-4 pt-6 border-t border-white/5 flex justify-between items-center text-[10px] font-mono text-gray-600">
-                <span>TRACE_LEVEL: {difficulty}</span>
-                <span>ATTEMPTS: {guesses.length}/{maxAttempts}</span>
             </div>
         </div>
     )
@@ -151,9 +140,9 @@ const Keyboard = ({ usedLetters, onKey }: { usedLetters: Record<string, LetterSt
     ]
 
     return (
-        <div className="flex flex-col gap-2 items-center w-full mt-4">
+        <div className="flex flex-col gap-1.5 sm:gap-2 items-center w-full max-w-full overflow-x-hidden mt-4 sm:mt-8 pb-10">
             {rows.map((row, i) => (
-                <div key={i} className="flex gap-1 sm:gap-1.5">
+                <div key={i} className="flex gap-1 sm:gap-1.5 px-2">
                     {row.map(key => {
                         const status = usedLetters[key] || 'empty'
                         const isAction = key === 'ENTER' || key === 'DEL'
@@ -165,8 +154,8 @@ const Keyboard = ({ usedLetters, onKey }: { usedLetters: Record<string, LetterSt
                                 whileTap={{ scale: 0.9 }}
                                 onClick={() => onKey(key)}
                                 className={`
-                                    ${isAction ? 'px-2 sm:px-4' : 'w-7 sm:w-11'} 
-                                    h-11 sm:h-12 rounded-lg sm:rounded-xl font-black text-[9px] sm:text-xs flex items-center justify-center transition-all duration-300 border-b-2
+                                    ${isAction ? 'px-2 sm:px-4 text-[8px] sm:text-[10px]' : 'w-[8.5vw] sm:w-11 text-[10px] sm:text-xs'} 
+                                    h-11 sm:h-12 rounded-lg sm:rounded-xl font-black flex items-center justify-center transition-all duration-300 border-b-2
                                     ${status === 'correct' ? 'bg-chaos-green border-green-700 text-black' :
                                       status === 'present' ? 'bg-chaos-yellow border-yellow-700 text-black' :
                                       status === 'absent' ? 'bg-chaos-gray border-gray-800 text-white opacity-40' :
@@ -210,7 +199,8 @@ export const Game = ({ onBack, isMultiplayer }: { onBack: () => void, isMultipla
   const [hintMsg, setHintMsg] = useState<string | null>(null)
   const [wordTimer, setWordTimer] = useState("0.0s")
   
-  const opponent = players.find(p => p.id !== 'me' && p.name !== playerName)
+  // Robust opponent detection
+  const opponent = players.find(p => p.id !== 'me')
 
   useEffect(() => {
     if (status !== 'playing') return
@@ -281,30 +271,30 @@ export const Game = ({ onBack, isMultiplayer }: { onBack: () => void, isMultipla
   }
 
   return (
-    <div className="flex flex-col items-center justify-center w-full max-w-7xl min-h-screen relative p-4 gap-8">
+    <div className="flex flex-col items-center justify-start sm:justify-center w-full max-w-7xl min-h-screen relative p-4 gap-4 sm:gap-8 pt-20 sm:pt-4">
       
       {/* Top HUD */}
-      <div className="w-full max-w-4xl flex justify-between items-end px-4 mb-4">
+      <div className="w-full max-w-4xl flex justify-between items-end px-2 sm:px-4 mb-2 sm:mb-4">
         <div className="text-left">
-          <div className="text-[10px] text-gray-500 font-mono tracking-widest uppercase mb-1">Pulse Sync</div>
-          <div className="text-3xl font-black italic neon-text">{wordTimer}</div>
+          <div className="text-[8px] sm:text-[10px] text-gray-500 font-mono tracking-widest uppercase mb-1">Pulse Sync</div>
+          <div className="text-xl sm:text-3xl font-black italic neon-text">{wordTimer}</div>
         </div>
         
         <div className="flex flex-col items-center">
-          <div className={`font-black text-6xl italic leading-none ${timeLeft < 20 ? 'text-chaos-red animate-pulse' : 'text-white'}`}>
+          <div className={`font-black text-4xl sm:text-6xl italic leading-none ${timeLeft < 20 ? 'text-chaos-red animate-pulse' : 'text-white'}`}>
             {formatTime()}
           </div>
-          <div className="text-[9px] text-chaos-green font-mono uppercase tracking-[0.4em] mt-2">CYC: {difficulty} // {guesses.length}/{maxAttempts}</div>
+          <div className="text-[7px] sm:text-[9px] text-chaos-green font-mono uppercase tracking-[0.4em] mt-1 sm:mt-2">CYC: {difficulty} // {guesses.length}/{maxAttempts}</div>
         </div>
 
         <div className="text-right">
-           <div className="text-[10px] text-gray-500 font-mono tracking-widest uppercase mb-1">XP Gain</div>
-           <div className="text-3xl font-black italic neon-text">{(guesses.length * 450).toLocaleString()}</div>
+           <div className="text-[8px] sm:text-[10px] text-gray-500 font-mono tracking-widest uppercase mb-1">XP Gain</div>
+           <div className="text-xl sm:text-3xl font-black italic neon-text">{(guesses.length * 450).toLocaleString()}</div>
         </div>
       </div>
 
       {/* Main Arena: Duel View */}
-      <div className={`flex flex-col ${isMultiplayer ? 'xl:flex-row' : ''} items-center justify-center gap-12 w-full`}>
+      <div className={`flex flex-col ${isMultiplayer ? 'xl:flex-row' : ''} items-center justify-center gap-6 sm:gap-12 w-full`}>
         
         {/* LEFT: Player Grid */}
         <div className="relative group">
@@ -312,16 +302,16 @@ export const Game = ({ onBack, isMultiplayer }: { onBack: () => void, isMultipla
                 {godMode && (
                     <motion.div 
                         initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
-                        className="absolute -top-12 left-0 right-0 text-center text-chaos-red font-black text-sm tracking-[0.5em] animate-pulse z-50"
+                        className="absolute -top-10 sm:-top-12 left-0 right-0 text-center text-chaos-red font-black text-[10px] sm:text-sm tracking-[0.3em] sm:tracking-[0.5em] animate-pulse z-50"
                     >
                         GOD_MODE_ACTIVE // TARGET: {targetWord}
                     </motion.div>
                 )}
             </AnimatePresence>
-            <div className="flex flex-col gap-2 p-10 rounded-[4rem] bg-white/[0.02] border border-white/5 backdrop-blur-3xl shadow-2xl transition-transform group-hover:scale-[1.01] border-b-8 border-r-8">
-                <div className="flex justify-between items-center mb-6 px-4">
-                    <span className="font-black text-xs tracking-widest text-chaos-green uppercase">YOU POV</span>
-                    <span className="text-[10px] font-mono text-gray-500">{playerName}</span>
+            <div className="flex flex-col gap-1.5 sm:gap-2 p-6 sm:p-10 rounded-[2.5rem] sm:rounded-[4rem] bg-white/[0.02] border border-white/5 backdrop-blur-3xl shadow-2xl transition-transform group-hover:scale-[1.01] border-b-4 sm:border-b-8 border-r-4 sm:border-r-8">
+                <div className="flex justify-between items-center mb-4 sm:mb-6 px-2 sm:px-4">
+                    <span className="font-black text-[10px] sm:text-xs tracking-widest text-chaos-green uppercase">YOU POV</span>
+                    <span className="text-[8px] sm:text-[10px] font-mono text-gray-500">{playerName}</span>
                 </div>
                 {Array.from({ length: maxAttempts }).map((_, i) => (
                     <Row 
@@ -357,7 +347,7 @@ export const Game = ({ onBack, isMultiplayer }: { onBack: () => void, isMultipla
         {hintMsg && (
           <motion.div 
             initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ opacity: 0 }}
-            className="mt-6 px-8 py-4 glass-panel border-chaos-green/50 text-chaos-green font-black italic rounded-2xl shadow-2xl z-50 text-center max-w-sm"
+            className="fixed bottom-32 sm:relative sm:bottom-0 px-8 py-4 glass-panel border-chaos-green/50 text-chaos-green font-black italic rounded-2xl shadow-2xl z-50 text-center max-w-xs sm:max-w-sm"
           >
             {hintMsg}
           </motion.div>
@@ -365,13 +355,13 @@ export const Game = ({ onBack, isMultiplayer }: { onBack: () => void, isMultipla
       </AnimatePresence>
 
       {/* Global Actions - Floating Mobile Decrypt */}
-      <div className="fixed right-8 bottom-8 flex flex-col gap-4 md:hidden z-50">
+      <div className="fixed right-4 bottom-32 sm:right-8 sm:bottom-8 flex flex-col gap-4 md:hidden z-[110]">
           <motion.button 
             whileTap={INTERACTIVE_VARIANTS.tap}
             onClick={onDecrypt} 
-            className="p-5 bg-chaos-green/20 rounded-full backdrop-blur-xl text-chaos-green border border-chaos-green/20 shadow-2xl"
+            className="p-4 sm:p-5 bg-chaos-green/20 rounded-full backdrop-blur-xl text-chaos-green border border-chaos-green/20 shadow-2xl"
           >
-              <Cpu size={24} />
+              <Cpu size={20} className="sm:w-6 sm:h-6" />
           </motion.button>
       </div>
 
@@ -379,27 +369,27 @@ export const Game = ({ onBack, isMultiplayer }: { onBack: () => void, isMultipla
       <AnimatePresence>
         {status !== 'playing' && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="fixed inset-0 z-[300] flex items-center justify-center bg-black/95 backdrop-blur-2xl p-4">
-            <motion.div initial={{ scale: 0.8, y: 20 }} animate={{ scale: 1, y: 0 }} className="glass-panel p-16 rounded-[4rem] max-w-lg w-full text-center space-y-10 border-white/10 shadow-[0_0_100px_rgba(0,255,136,0.1)]">
+            <motion.div initial={{ scale: 0.8, y: 20 }} animate={{ scale: 1, y: 0 }} className="glass-panel p-8 sm:p-16 rounded-[3rem] sm:rounded-[4rem] max-w-lg w-full text-center space-y-6 sm:space-y-10 border-white/10 shadow-[0_0_100px_rgba(0,255,136,0.1)]">
               <div className="space-y-2">
-                <h2 className={`text-8xl font-black italic tracking-tighter ${status === 'won' ? 'text-chaos-green neon-text' : 'text-chaos-red'}`}>
+                <h2 className={`text-5xl sm:text-8xl font-black italic tracking-tighter ${status === 'won' ? 'text-chaos-green neon-text' : 'text-chaos-red'}`}>
                   {status === 'won' ? 'BYPASSED' : 'VOIDED'}
                 </h2>
-                <p className="text-gray-400 font-mono text-[10px] tracking-[0.8em] uppercase leading-none">Access Terminated</p>
+                <p className="text-gray-400 font-mono text-[8px] sm:text-[10px] tracking-[0.6em] sm:tracking-[0.8em] uppercase leading-none">Access Terminated</p>
               </div>
 
-              <div className="space-y-3 bg-white/5 p-8 rounded-[3.5rem] border border-white/5 shadow-inner">
-                <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest">Neural Target</p>
-                <p className="text-6xl font-black tracking-[0.2em] text-white underline decoration-chaos-green decoration-4 underline-offset-8 uppercase">{targetWord}</p>
+              <div className="space-y-2 sm:space-y-3 bg-white/5 p-6 sm:p-8 rounded-[2.5rem] sm:rounded-[3.5rem] border border-white/5 shadow-inner">
+                <p className="text-gray-500 text-[8px] sm:text-[10px] font-black uppercase tracking-widest">Neural Target</p>
+                <p className="text-4xl sm:text-6xl font-black tracking-[0.1em] sm:tracking-[0.2em] text-white underline decoration-chaos-green decoration-4 underline-offset-8 uppercase">{targetWord}</p>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-white/5 p-6 rounded-[2.5rem] border border-white/5 shadow-xl">
-                  <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1">Time Sync</div>
-                  <div className="text-2xl font-black italic">{formatTime()}</div>
+              <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                <div className="bg-white/5 p-4 sm:p-6 rounded-[2rem] sm:rounded-[2.5rem] border border-white/5 shadow-xl">
+                  <div className="text-[8px] sm:text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1">Time Sync</div>
+                  <div className="text-xl sm:text-2xl font-black italic">{formatTime()}</div>
                 </div>
-                <div className="bg-white/5 p-6 rounded-[2.5rem] border border-white/5 shadow-xl">
-                  <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1">XP Gain</div>
-                  <div className="text-2xl font-black italic">+{status === 'won' ? '5.2k' : '0'}</div>
+                <div className="bg-white/5 p-4 sm:p-6 rounded-[2rem] sm:rounded-[2.5rem] border border-white/5 shadow-xl">
+                  <div className="text-[8px] sm:text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1">XP Gain</div>
+                  <div className="text-xl sm:text-2xl font-black italic">+{status === 'won' ? '5.2k' : '0'}</div>
                 </div>
               </div>
 
@@ -407,7 +397,7 @@ export const Game = ({ onBack, isMultiplayer }: { onBack: () => void, isMultipla
                 whileHover={INTERACTIVE_VARIANTS.hover}
                 whileTap={INTERACTIVE_VARIANTS.tap}
                 onClick={onBack} 
-                className="w-full py-8 bg-white text-black font-black text-3xl rounded-[2.5rem] transition-all shadow-2xl"
+                className="w-full py-6 sm:py-8 bg-white text-black font-black text-2xl sm:text-3xl rounded-[2rem] sm:rounded-[2.5rem] transition-all shadow-2xl"
               >
                 REBOOT SYSTEM
               </motion.button>
