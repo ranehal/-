@@ -30,7 +30,7 @@ function App() {
   const sessionId = useRef(Math.random().toString(36).substring(7)).current
   
   const { 
-    initGame, bgMode, cycleBg, useTimer, setTimerOption, 
+    initGame, bgMode, cycleTheme, theme, useTimer, setTimerOption, 
     multiplayerRoomId, godMode, tapFaq, isHost, playerName, setPlayerName, players, setReady,
     updatePlayerGrid, setPlayers, guesses, currentGuess, targetWord, wordHint
   } = useGameStore()
@@ -193,11 +193,11 @@ function App() {
       {/* Global Utilities */}
       <div className="fixed bottom-4 left-4 sm:bottom-8 sm:left-8 z-[100] flex gap-2 sm:gap-4 items-center">
         <div className="flex flex-col items-center gap-1 sm:gap-2">
-            <span className="text-[7px] sm:text-[9px] font-black text-chaos-green tracking-widest uppercase">BG_SYNC</span>
+            <span className="text-[7px] sm:text-[9px] font-black text-chaos-green tracking-widest uppercase">{theme}</span>
             <motion.button 
                 whileHover={INTERACTIVE_VARIANTS.hover}
                 whileTap={INTERACTIVE_VARIANTS.tap}
-                onClick={() => { audio.play('click'); cycleBg(); }}
+                onClick={() => { audio.play('click'); cycleTheme(); }}
                 className="p-4 sm:p-5 glass-panel rounded-2xl sm:rounded-3xl border-white/10 hover:bg-chaos-green/20 transition-all group shadow-2xl"
             >
                 <Layers size={18} className="sm:w-6 sm:h-6 group-hover:text-chaos-green transition-colors" />

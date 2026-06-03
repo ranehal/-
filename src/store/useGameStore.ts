@@ -3,6 +3,7 @@ import { audio } from '../utils/audio'
 
 export type Difficulty = 'EZ' | 'Normal' | 'Asian'
 export type LetterStatus = 'empty' | 'absent' | 'present' | 'correct'
+export type GameTheme = 'SPACE' | 'UNIVERSE' | 'NEON_FLUID' | 'HALLUCINATION' | 'CHAOS'
 
 interface Player {
   id: string
@@ -10,7 +11,7 @@ interface Player {
   isHost: boolean
   isReady: boolean
   gridState?: string[]
-  currentGuess?: string // Added for real-time typing sync
+  currentGuess?: string 
 }
 
 interface GameState {
@@ -26,7 +27,7 @@ interface GameState {
   difficulty: Difficulty
   hintsUsed: number
   faqTaps: number
-  bgMode: number
+  theme: GameTheme
   useTimer: boolean
   godMode: boolean
   wordStartTime: number
@@ -36,7 +37,7 @@ interface GameState {
   // Actions
   setPlayerName: (name: string) => void
   setReady: (id: string, ready: boolean) => void
-  updatePlayerGrid: (id: string, guesses: string[], currentGuess?: string) => void // Updated sync
+  updatePlayerGrid: (id: string, guesses: string[], currentGuess?: string) => void 
   addPlayer: (player: Player) => void
   removePlayer: (id: string) => void
   setPlayers: (players: Player[]) => void
@@ -45,17 +46,19 @@ interface GameState {
   removeLetter: () => void
   submitGuess: () => boolean
   tapFaq: () => boolean 
-  cycleBg: () => void
+  setTheme: (theme: GameTheme) => void
+  cycleTheme: () => void
   setTimerOption: (val: boolean) => void
   setWordLength: (len: number) => void
   resetWordTimer: () => void
 }
 
 const FRUITS = ['APPLE', 'MANGO', 'CHERRY', 'BANANA', 'PAPAYA', 'BERRY', 'MELON', 'PEACH', 'GRAPE', 'KIWI', 'LEMON', 'LIME', 'COCO', 'FIG', 'PLUM']
+const THEMES: GameTheme[] = ['SPACE', 'UNIVERSE', 'NEON_FLUID', 'HALLUCINATION', 'CHAOS']
 
 export const useGameStore = create<GameState>((set, get) => ({
   playerName: FRUITS[Math.floor(Math.random() * FRUITS.length)] + '_' + Math.floor(Math.random() * 99),
-  players: [{ id: 'me', name: 'INITIALIZING...', isHost: true, isReady: true }], // Initialize with 'me'
+  players: [{ id: 'me', name: 'INITIALIZING...', isHost: true, isReady: true }], 
   wordLength: 5,
   maxAttempts: 6,
   targetWord: '',
@@ -66,7 +69,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   difficulty: 'Normal',
   hintsUsed: 0,
   faqTaps: 0,
-  bgMode: 0,
+  theme: 'CHAOS',
   useTimer: true,
   godMode: false,
   wordStartTime: Date.now(),
@@ -107,10 +110,6 @@ export const useGameStore = create<GameState>((set, get) => ({
     let maxAttempts = 6
     if (difficulty === 'Asian') maxAttempts = 5
 
-    const playerName = get().playerName
-    // Note: sessionId will be passed from App.tsx via a new setSessionId action or similar
-    // For now, we clear players and let App.tsx presence sync populate the list
-    
     set({
       difficulty,
       targetWord: word.toUpperCase(),
@@ -126,7 +125,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       wordStartTime: Date.now(),
       multiplayerRoomId: roomId,
       isHost: isHost,
-      players: [], // Let Supabase Presence take over for multiplayer
+      players: [], 
       faqTaps: 0 
     })
   },
@@ -165,13 +164,17 @@ export const useGameStore = create<GameState>((set, get) => ({
     set({ faqTaps: nextTaps })
     if (nextTaps >= 5) {
       set({ godMode: true })
-      audio.play('win') // Play a sound when egg is cracked
+      audio.play('win') 
       return true
     }
     return false
   },
 
-  cycleBg: () => set((state) => ({ bgMode: (state.bgMode + 1) % 5 })), // Match total available shader modes
+  setTheme: (theme) => set({ theme }),
+  cycleTheme: () => set((state) => {
+      const idx = THEMES.indexOf(state.theme)
+      return { theme: THEMES[(idx + 1) % THEMES.length] }
+  }),
   setTimerOption: (val) => set({ useTimer: val }),
   setWordLength: (len) => set({ wordLength: len }),
   resetWordTimer: () => set({ wordStartTime: Date.now() })
