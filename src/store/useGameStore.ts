@@ -129,7 +129,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       status: 'playing',
       hintsUsed: 0,
       useTimer,
-      godMode: false,
+      godMode: get().godMode, // Persist God Mode if already active from menu
       wordStartTime: Date.now(),
       multiplayerRoomId: roomId,
       isHost: isHost,

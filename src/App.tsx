@@ -98,15 +98,31 @@ function App() {
     }
   }, [multiplayerRoomId, playerName, isHost, setPlayers, updatePlayerGrid, setView, initGame, sessionId])
 
-  // BROADCAST LOOP: High-frequency typing sync
+  // BROADCAST LOOP: Throttled for performance
+  const lastSyncTime = useRef(0)
   useEffect(() => {
       if (!multiplayerRoomId || view !== 'game' || !channelRef.current) return
       
+      const now = Date.now()
+      if (now - lastSyncTime.current < 200) {
+          const timer = setTimeout(() => {
+              if (channelRef.current) {
+                  channelRef.current.send({
+                      type: 'broadcast',
+                      event: 'sync_grid',
+                      payload: { playerName: sessionId, guesses, currentGuess }
+                  })
+              }
+          }, 200)
+          return () => clearTimeout(timer)
+      }
+
       channelRef.current.send({
           type: 'broadcast',
           event: 'sync_grid',
           payload: { playerName: sessionId, guesses, currentGuess }
       })
+      lastSyncTime.current = now
   }, [currentGuess, guesses, multiplayerRoomId, view, sessionId])
 
   useEffect(() => {
