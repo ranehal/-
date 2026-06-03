@@ -30,11 +30,11 @@ function App() {
   const sessionId = useRef(Math.random().toString(36).substring(7)).current
   
   const { 
-    initGame, bgMode, cycleTheme, theme, useTimer, setTimerOption, 
+    initGame, cycleTheme, theme, useTimer, setTimerOption, 
     multiplayerRoomId, godMode, tapFaq, isHost, playerName, setPlayerName, players, setReady,
     updatePlayerGrid, setPlayers, guesses, currentGuess, targetWord, wordHint
   } = useGameStore()
-  
+
   const { gamesPlayed, gamesWon, currentStreak, maxStreak, history } = useStatsStore()
 
   const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString())
@@ -110,7 +110,7 @@ function App() {
   }, [currentGuess, guesses, multiplayerRoomId, view, sessionId])
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
+    const params = newSearchParams(window.location.search)
     const roomId = params.get('room')
     if (roomId && view === 'home') {
       initGame('Normal', '', '', true, roomId, false)
@@ -167,7 +167,7 @@ function App() {
 
   return (
     <div className="min-h-screen w-screen flex flex-col items-center justify-center p-4 relative overflow-x-hidden bg-[#050505] text-white">
-      <ShaderBackground mode={bgMode} />
+      <ShaderBackground mode={0} />
       
       {/* Global Navigation */}
       <div className="fixed top-4 left-4 sm:top-8 sm:left-8 z-[100]">
