@@ -122,7 +122,7 @@ const Keyboard = ({ usedLetters, onKey }: { usedLetters: Record<string, LetterSt
     ]
 
     return (
-        <div className="flex flex-col gap-2 items-center w-full mt-10">
+        <div className="flex flex-col gap-2 items-center w-full mt-4 mb-4">
             {rows.map((row, i) => (
                 <div key={i} className="flex gap-1 sm:gap-2">
                     {row.map(key => {

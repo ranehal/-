@@ -38,6 +38,17 @@ function App() {
 
   const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString())
 
+  const goHome = () => {
+    audio.play('click')
+    // Reset multiplayer ID if we leave lobby/game
+    if (view === 'multiplayer-lobby' || view === 'game') {
+        initGame('Normal', '', '', true, null, true)
+    }
+    setView('home')
+    // Clear URL params
+    window.history.replaceState({}, document.title, "/")
+  }
+
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date().toLocaleTimeString()), 1000)
     return () => clearInterval(timer)
@@ -184,6 +195,22 @@ function App() {
                 <Info size={24} />
             </motion.button>
         </div>
+      </div>
+
+      <div className="fixed top-8 left-8 z-[100]">
+        <AnimatePresence>
+            {view !== 'home' && (
+                <motion.button
+                    initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
+                    whileHover={INTERACTIVE_VARIANTS.hover} whileTap={INTERACTIVE_VARIANTS.tap}
+                    onClick={goHome}
+                    className="p-5 glass-panel rounded-3xl border-white/10 hover:bg-chaos-red/20 transition-all group shadow-2xl flex items-center gap-3"
+                >
+                    <ArrowLeft size={24} className="group-hover:text-chaos-red transition-colors" />
+                    <span className="font-black text-[10px] tracking-widest uppercase">DISCONNECT</span>
+                </motion.button>
+            )}
+        </AnimatePresence>
       </div>
 
       <div className="fixed top-8 right-8 font-mono text-chaos-green/40 text-[10px] tracking-[0.5em] z-50">
