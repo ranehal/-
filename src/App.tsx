@@ -67,7 +67,7 @@ function App() {
         .on('presence', { event: 'sync' }, () => {
             const state = channel.presenceState()
             const syncedPlayers = Object.entries(state).map(([key, val]: [string, any]) => ({
-                id: key === playerName ? 'me' : key, // Map local player to 'me'
+                id: key === playerName ? 'me' : key, // Use 'me' for local player
                 name: key,
                 isHost: val[0]?.isHost || false,
                 isReady: val[0]?.isReady || false,
@@ -416,19 +416,18 @@ function App() {
                         whileHover={INTERACTIVE_VARIANTS.hover}
                         whileTap={INTERACTIVE_VARIANTS.tap}
                         onClick={async () => {
-                            const me = players.find(p => p.id === playerName)
-                            if (me) {
+                            const me = players.find(p => p.id === 'me')
+                            if (me && channelRef.current) {
                                 const newReady = !me.isReady
-                                setReady(playerName, newReady)
-                                // Track updated state in Supabase Presence
-                                const channel = supabase.channel(`room_${multiplayerRoomId}`)
-                                await channel.track({ isHost, isReady: newReady, playerName })
+                                setReady('me', newReady) // Use 'me' to update local store state
+                                // Track updated state in stable Supabase Presence channel
+                                await channelRef.current.track({ isHost, isReady: newReady, playerName })
                                 audio.play('click')
                             }
                         }}
-                        className={`py-5 rounded-[2rem] flex items-center justify-center gap-3 font-black transition-all shadow-xl ${players.find(p => p.id === playerName)?.isReady ? 'bg-chaos-green text-black' : 'bg-white/10 text-white'}`}
+                        className={`py-5 rounded-[2rem] flex items-center justify-center gap-3 font-black transition-all shadow-xl ${players.find(p => p.id === 'me')?.isReady ? 'bg-chaos-green text-black' : 'bg-white/10 text-white'}`}
                     >
-                        <CheckCircle2 size={20} /> {players.find(p => p.id === playerName)?.isReady ? 'READY' : 'GO READY'}
+                        <CheckCircle2 size={20} /> {players.find(p => p.id === 'me')?.isReady ? 'READY' : 'GO READY'}
                     </motion.button>
                 )}
             </div>

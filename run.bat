@@ -17,6 +17,7 @@ echo [SYSTEM] Starting Neural Interface (Vite Dev Server)...
 echo [SYSTEM] URL: http://localhost:5173
 echo.
 
+start http://localhost:5173
 call npm run dev
 
 pause
