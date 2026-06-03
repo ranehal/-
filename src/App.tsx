@@ -173,8 +173,8 @@ function App() {
 
   const copyRoomLink = () => {
     if (!multiplayerRoomId) return
-    // Respect the base path from Vite config if it exists
-    const baseUrl = window.location.origin + window.location.pathname.replace(/\/$/, '')
+    // Respect the base path and ensure trailing slash for GH Pages compatibility
+    const baseUrl = window.location.origin + window.location.pathname.replace(/\/$/, '') + '/'
     const url = `${baseUrl}?room=${multiplayerRoomId}`
     navigator.clipboard.writeText(url)
     audio.play('click')

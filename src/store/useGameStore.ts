@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { audio } from '../utils/audio'
 
 export type Difficulty = 'EZ' | 'Normal' | 'Asian'
 export type LetterStatus = 'empty' | 'absent' | 'present' | 'correct'
