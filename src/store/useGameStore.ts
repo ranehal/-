@@ -79,14 +79,14 @@ export const useGameStore = create<GameState>((set, get) => ({
   })),
 
   updatePlayerGrid: (id, guesses, currentGuess) => set((state) => {
-    const playerIndex = state.players.findIndex(p => p.id === id)
+    const playerIndex = state.players.findIndex(p => p.id === id || p.name === id)
     if (playerIndex === -1) return state
     
     const newPlayers = [...state.players]
     newPlayers[playerIndex] = { 
         ...newPlayers[playerIndex], 
         gridState: guesses, 
-        currentGuess: currentGuess ?? newPlayers[playerIndex].currentGuess 
+        currentGuess: currentGuess 
     }
     return { players: newPlayers }
   }),

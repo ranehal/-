@@ -18,12 +18,15 @@ const INTERACTIVE_VARIANTS = {
 }
 
 import { supabase } from './utils/supabase'
+import { RealtimeChannel } from '@supabase/supabase-js'
+import { useRef } from 'react'
 
 function App() {
   const [view, setView] = useState<'home' | 'game' | 'multiplayer-lobby' | 'stats'>('home')
   const [difficulty, setDifficulty] = useState<Difficulty>('Normal')
   const [showFaq, setShowFaq] = useState(false)
   const [tempWordLen, setTempWordLen] = useState(5)
+  const channelRef = useRef<RealtimeChannel | null>(null)
   
   const { 
     initGame, bgMode, cycleBg, useTimer, setTimerOption, 
@@ -47,12 +50,13 @@ function App() {
     const channel = supabase.channel(`room_${multiplayerRoomId}`, {
         config: { broadcast: { self: false }, presence: { key: playerName } }
     })
+    channelRef.current = channel
 
     channel
         .on('presence', { event: 'sync' }, () => {
             const state = channel.presenceState()
             const syncedPlayers = Object.entries(state).map(([key, val]: [string, any]) => ({
-                id: key,
+                id: key === playerName ? 'me' : key, // Map local player to 'me'
                 name: key,
                 isHost: val[0]?.isHost || false,
                 isReady: val[0]?.isReady || false,
@@ -76,15 +80,17 @@ function App() {
             }
         })
 
-    return () => { channel.unsubscribe() }
+    return () => { 
+        channel.unsubscribe() 
+        channelRef.current = null
+    }
   }, [multiplayerRoomId, playerName, isHost, setPlayers, updatePlayerGrid, setView, initGame])
 
-  // BROADCAST LOOP: Using a separate effect for high-frequency typing sync
+  // BROADCAST LOOP: High-frequency typing sync
   useEffect(() => {
-      if (!multiplayerRoomId || view !== 'game') return
+      if (!multiplayerRoomId || view !== 'game' || !channelRef.current) return
       
-      const channel = supabase.channel(`room_${multiplayerRoomId}`)
-      channel.send({
+      channelRef.current.send({
           type: 'broadcast',
           event: 'sync_grid',
           payload: { playerName, guesses, currentGuess }

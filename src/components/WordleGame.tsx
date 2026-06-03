@@ -181,26 +181,10 @@ export const Game = ({ onBack, isMultiplayer }: { onBack: () => void, isMultipla
   const [hintMsg, setHintMsg] = useState<string | null>(null)
   const [wordTimer, setWordTimer] = useState("0.0s")
   
-  // Real-time POV Broadcast Simulation (In production, this would use Supabase Channels)
+  // Real-time POV Broadcast Sync
   useEffect(() => {
-      if (isMultiplayer && guesses.length > 0) {
-          // Broadcast my state (simulated)
-          // updatePlayerGrid('me', guesses)
-          
-          // Simulation: Guest makes progress every few seconds
-          const guest = players.find(p => p.id === 'guest_sim')
-          if (guest) {
-              const timer = setTimeout(() => {
-                  const currentGuestGuesses = guest.gridState || []
-                  if (currentGuestGuesses.length < maxAttempts && status === 'playing') {
-                      const mockGuess = "ABCDE" // In real life, this would be the actual data from Supabase
-                      updatePlayerGrid('guest_sim', [...currentGuestGuesses, mockGuess])
-                      triggerHaptic('light')
-                  }
-              }, 8000)
-              return () => clearTimeout(timer)
-          }
-      }
+      // In production, sync is handled by App.tsx Supabase hooks.
+      // This useEffect is now just a placeholder for local-only side effects if needed.
   }, [guesses, isMultiplayer, players, status, updatePlayerGrid, maxAttempts])
 
   useEffect(() => {
