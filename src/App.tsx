@@ -28,7 +28,7 @@ function App() {
   const { 
     initGame, bgMode, cycleBg, useTimer, setTimerOption, 
     multiplayerRoomId, godMode, tapFaq, isHost, playerName, setPlayerName, players, setReady,
-    updatePlayerGrid, setPlayers, guesses, targetWord, wordHint
+    updatePlayerGrid, setPlayers, guesses, currentGuess, targetWord, wordHint
   } = useGameStore()
   
   const { gamesPlayed, gamesWon, currentStreak, maxStreak, history } = useStatsStore()
