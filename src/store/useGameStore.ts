@@ -109,14 +109,12 @@ export const useGameStore = create<GameState>((set, get) => ({
     const playerName = get().playerName
     // Initialize players list
     const players: Player[] = [
-        { id: 'me', name: playerName, isHost, isReady: isHost } // Host is always ready by default or needs to wait
+        { id: 'me', name: playerName, isHost, isReady: isHost }
     ]
     
     if (!isHost) {
-        // If I am guest, add a simulated host
         players.unshift({ id: 'host', name: 'CORE_SYSTEM', isHost: true, isReady: true })
     } else if (roomId) {
-        // If I am host and in a room, add a simulated guest
         players.push({ id: 'guest_sim', name: 'WAITING_GUEST...', isHost: false, isReady: false })
     }
 
@@ -124,7 +122,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       difficulty,
       targetWord: word.toUpperCase(),
       wordHint: hint,
-      wordLength: word.length,
+      wordLength: word.length, // Ensure we use the actual word's length
       maxAttempts,
       guesses: [],
       currentGuess: '',
@@ -135,7 +133,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       wordStartTime: Date.now(),
       multiplayerRoomId: roomId,
       isHost: isHost,
-      players: players
+      players: players,
+      faqTaps: 0 // Reset Easter egg progress
     })
   },
 
@@ -173,12 +172,13 @@ export const useGameStore = create<GameState>((set, get) => ({
     set({ faqTaps: nextTaps })
     if (nextTaps >= 5) {
       set({ godMode: true })
+      audio.play('win') // Play a sound when egg is cracked
       return true
     }
     return false
   },
 
-  cycleBg: () => set((state) => ({ bgMode: (state.bgMode + 1) % 50 })),
+  cycleBg: () => set((state) => ({ bgMode: (state.bgMode + 1) % 5 })), // Match total available shader modes
   setTimerOption: (val) => set({ useTimer: val }),
   setWordLength: (len) => set({ wordLength: len }),
   resetWordTimer: () => set({ wordStartTime: Date.now() })

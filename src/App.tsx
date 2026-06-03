@@ -140,7 +140,7 @@ function App() {
       initGame(difficulty, wordData.word, wordData.hint, useTimer, multiplayerRoomId, true)
       
       // Broadcast to all guests
-      supabase.channel(`room_${multiplayerRoomId}`).send({
+      channelRef.current?.send({
           type: 'broadcast',
           event: 'sync_view',
           payload: { 
