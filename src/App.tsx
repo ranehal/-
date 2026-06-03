@@ -27,6 +27,7 @@ function App() {
   const [showFaq, setShowFaq] = useState(false)
   const [tempWordLen, setTempWordLen] = useState(5)
   const channelRef = useRef<RealtimeChannel | null>(null)
+  const sessionId = useRef(Math.random().toString(36).substring(7)).current
   
   const { 
     initGame, bgMode, cycleBg, useTimer, setTimerOption, 
@@ -59,7 +60,7 @@ function App() {
     if (!multiplayerRoomId) return
 
     const channel = supabase.channel(`room_${multiplayerRoomId}`, {
-        config: { broadcast: { self: false }, presence: { key: playerName } }
+        config: { broadcast: { self: false }, presence: { key: sessionId } }
     })
     channelRef.current = channel
 
@@ -67,8 +68,8 @@ function App() {
         .on('presence', { event: 'sync' }, () => {
             const state = channel.presenceState()
             const syncedPlayers = Object.entries(state).map(([key, val]: [string, any]) => ({
-                id: key === playerName ? 'me' : key, // Use 'me' for local player
-                name: key,
+                id: key === sessionId ? 'me' : key, 
+                name: val[0]?.playerName || 'UNKNOWN_NODE',
                 isHost: val[0]?.isHost || false,
                 isReady: val[0]?.isReady || false,
                 gridState: val[0]?.gridState || [],
@@ -87,7 +88,7 @@ function App() {
         })
         .subscribe(async (status) => {
             if (status === 'SUBSCRIBED') {
-                await channel.track({ isHost, isReady: isHost, playerName })
+                await channel.track({ isHost, isReady: isHost, playerName, sessionId })
             }
         })
 
@@ -95,7 +96,7 @@ function App() {
         channel.unsubscribe() 
         channelRef.current = null
     }
-  }, [multiplayerRoomId, playerName, isHost, setPlayers, updatePlayerGrid, setView, initGame])
+  }, [multiplayerRoomId, playerName, isHost, setPlayers, updatePlayerGrid, setView, initGame, sessionId])
 
   // BROADCAST LOOP: High-frequency typing sync
   useEffect(() => {
@@ -104,9 +105,9 @@ function App() {
       channelRef.current.send({
           type: 'broadcast',
           event: 'sync_grid',
-          payload: { playerName, guesses, currentGuess }
+          payload: { playerName: sessionId, guesses, currentGuess }
       })
-  }, [currentGuess, guesses, multiplayerRoomId, view, playerName])
+  }, [currentGuess, guesses, multiplayerRoomId, view, playerName, sessionId])
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)

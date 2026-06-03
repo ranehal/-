@@ -54,7 +54,7 @@ const FRUITS = ['APPLE', 'MANGO', 'CHERRY', 'BANANA', 'PAPAYA', 'BERRY', 'MELON'
 
 export const useGameStore = create<GameState>((set, get) => ({
   playerName: FRUITS[Math.floor(Math.random() * FRUITS.length)] + '_' + Math.floor(Math.random() * 99),
-  players: [],
+  players: [{ id: 'me', name: 'INITIALIZING...', isHost: true, isReady: true }], // Initialize with 'me'
   wordLength: 5,
   maxAttempts: 6,
   targetWord: '',

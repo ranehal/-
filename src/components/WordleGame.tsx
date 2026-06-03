@@ -85,10 +85,10 @@ const MiniCell = ({ letter, status }: { letter?: string, status: LetterStatus })
 
 const MiniGrid = ({ name, guesses, currentGuess, targetWord, difficulty, maxAttempts, isHost }: { name: string, guesses: string[], currentGuess?: string, targetWord: string, difficulty: string, maxAttempts: number, isHost: boolean }) => {
     return (
-        <div className="flex flex-col gap-4 p-8 glass-panel border-white/10 bg-white/[0.03] rounded-[3rem] shadow-2xl scale-90 xl:scale-100 transition-all border-b-8 border-r-8">
+        <div className="flex flex-col gap-4 p-8 glass-panel border-white/10 bg-white/[0.03] rounded-[3rem] shadow-2xl scale-90 xl:scale-95 transition-all border-b-8 border-r-8">
             <div className="flex justify-between items-center px-2">
                 <div className="flex items-center gap-3">
-                    <div className={`w-3 h-3 rounded-full ${isHost ? 'bg-chaos-green' : 'bg-chaos-red'} animate-pulse`} />
+                    <div className={`w-3 h-3 rounded-full ${isHost ? 'bg-chaos-green shadow-[0_0_10px_#00ff88]' : 'bg-chaos-red shadow-[0_0_10px_#ff3366]'} animate-pulse`} />
                     <span className="font-black text-xs tracking-widest text-gray-400 uppercase">{name} POV</span>
                 </div>
                 <span className="text-[10px] font-mono text-chaos-green/50">SYNC_ACTIVE</span>
@@ -130,9 +130,9 @@ const Keyboard = ({ usedLetters, onKey }: { usedLetters: Record<string, LetterSt
     ]
 
     return (
-        <div className="flex flex-col gap-2 items-center w-full mt-8">
+        <div className="flex flex-col gap-2 items-center w-full mt-4">
             {rows.map((row, i) => (
-                <div key={i} className="flex gap-1 sm:gap-2">
+                <div key={i} className="flex gap-1 sm:gap-1.5">
                     {row.map(key => {
                         const status = usedLetters[key] || 'empty'
                         const isAction = key === 'ENTER' || key === 'DEL'
@@ -144,11 +144,11 @@ const Keyboard = ({ usedLetters, onKey }: { usedLetters: Record<string, LetterSt
                                 whileTap={{ scale: 0.9 }}
                                 onClick={() => onKey(key)}
                                 className={`
-                                    ${isAction ? 'px-3 sm:px-6' : 'w-8 sm:w-12'} 
-                                    h-12 sm:h-14 rounded-lg sm:rounded-xl font-black text-[10px] sm:text-sm flex items-center justify-center transition-all duration-300 border-b-4
+                                    ${isAction ? 'px-2 sm:px-4' : 'w-7 sm:w-11'} 
+                                    h-11 sm:h-12 rounded-lg sm:rounded-xl font-black text-[9px] sm:text-xs flex items-center justify-center transition-all duration-300 border-b-2
                                     ${status === 'correct' ? 'bg-chaos-green border-green-700 text-black' :
                                       status === 'present' ? 'bg-chaos-yellow border-yellow-700 text-black' :
-                                      status === 'absent' ? 'bg-chaos-gray border-gray-800 text-white opacity-50' :
+                                      status === 'absent' ? 'bg-chaos-gray border-gray-800 text-white opacity-40' :
                                       'bg-white/10 border-white/5 text-white hover:bg-white/20'}
                                 `}
                             >
