@@ -67,49 +67,41 @@ const triggerHaptic = (type: 'light' | 'medium' | 'success' | 'error' = 'light')
   }
 }
 
-const MiniCell = ({ letter, status }: { letter?: string, status: LetterStatus }) => {
-    const getStatusColor = () => {
-        switch (status) {
-            case 'correct': return 'bg-chaos-green shadow-[0_0_8px_rgba(0,255,136,0.6)] border-chaos-green'
-            case 'present': return 'bg-chaos-yellow shadow-[0_0_8px_rgba(255,255,0,0.4)] border-chaos-yellow'
-            case 'absent': return 'bg-chaos-gray border-chaos-gray opacity-40'
-            default: return 'bg-white/5 border-white/10'
-        }
-    }
+const MiniGrid = ({ name, guesses, currentGuess, targetWord, difficulty, maxAttempts, isHost }: { name: string, guesses: string[], currentGuess?: string, targetWord: string, difficulty: string, maxAttempts: number, isHost: boolean }) => {
     return (
-        <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg border flex items-center justify-center text-sm sm:text-base font-black ${getStatusColor()} transition-all duration-300`}>
-            {letter?.toUpperCase()}
-        </div>
-    )
-}
+        <div className="flex flex-col gap-4 p-8 glass-panel border-white/10 bg-white/[0.03] rounded-[3rem] shadow-2xl scale-90 xl:scale-100 transition-all border-b-8 border-r-8">
+            <div className="flex justify-between items-center px-2">
+                <div className="flex items-center gap-3">
+                    <div className={`w-3 h-3 rounded-full ${isHost ? 'bg-chaos-green' : 'bg-chaos-red'} animate-pulse`} />
+                    <span className="font-black text-xs tracking-widest text-gray-400 uppercase">{name} POV</span>
+                </div>
+                <span className="text-[10px] font-mono text-chaos-green/50">SYNC_ACTIVE</span>
+            </div>
+            
+            <div className="flex flex-col gap-2">
+                {Array.from({ length: maxAttempts }).map((_, i) => {
+                    const isCurrentRow = i === guesses.length
+                    const word = isCurrentRow ? (currentGuess || '') : (guesses[i] || '')
+                    const isSubmitted = i < guesses.length
 
-const MiniGrid = ({ guesses, currentGuess, targetWord, difficulty, maxAttempts }: { guesses: string[], currentGuess?: string, targetWord: string, difficulty: string, maxAttempts: number }) => {
-    return (
-        <div className="flex flex-col gap-2 p-6 glass-panel border-white/10 bg-white/5 rounded-[2rem] shadow-2xl scale-110 origin-top-left">
-            {Array.from({ length: maxAttempts }).map((_, i) => {
-                const isCurrentRow = i === guesses.length
-                const word = isCurrentRow ? (currentGuess || '') : (guesses[i] || '')
-                const isSubmitted = i < guesses.length
+                    return (
+                        <div key={i} className="flex gap-2 justify-center">
+                            {Array.from({ length: targetWord.length }).map((_, j) => {
+                                const letter = word[j] || ''
+                                let status: LetterStatus = 'empty'
+                                
+                                if (isSubmitted) {
+                                    if (letter === targetWord[j]) status = 'correct'
+                                    else if (targetWord.includes(letter)) status = difficulty === 'Asian' ? 'absent' : 'present'
+                                    else status = 'absent'
+                                }
 
-                return (
-                    <div key={i} className="flex gap-2">
-                        {Array.from({ length: targetWord.length }).map((_, j) => {
-                            const letter = word[j] || ''
-                            let status: LetterStatus = 'empty'
-                            
-                            if (isSubmitted) {
-                                if (letter === targetWord[j]) status = 'correct'
-                                else if (targetWord.includes(letter)) status = difficulty === 'Asian' ? 'absent' : 'present'
-                                else status = 'absent'
-                            } else if (isCurrentRow && letter) {
-                                status = 'empty' // Show typing letters without colors
-                            }
-
-                            return <MiniCell key={j} letter={letter} status={status} />
-                        })}
-                    </div>
-                )
-            })}
+                                return <MiniCell key={j} letter={letter} status={status} />
+                            })}
+                        </div>
+                    )
+                })}
+            </div>
         </div>
     )
 }
@@ -122,7 +114,7 @@ const Keyboard = ({ usedLetters, onKey }: { usedLetters: Record<string, LetterSt
     ]
 
     return (
-        <div className="flex flex-col gap-2 items-center w-full mt-4 mb-4">
+        <div className="flex flex-col gap-2 items-center w-full mt-8">
             {rows.map((row, i) => (
                 <div key={i} className="flex gap-1 sm:gap-2">
                     {row.map(key => {
@@ -158,7 +150,7 @@ export const Game = ({ onBack, isMultiplayer }: { onBack: () => void, isMultipla
   const { 
     guesses, currentGuess, maxAttempts, status, targetWord, 
     difficulty, addLetter, removeLetter, submitGuess: storeSubmitGuess,
-    wordHint, godMode, wordStartTime, players, updatePlayerGrid
+    wordHint, godMode, wordStartTime, players, updatePlayerGrid, playerName
   } = useGameStore()
 
   const { addMatch } = useStatsStore()
@@ -181,11 +173,7 @@ export const Game = ({ onBack, isMultiplayer }: { onBack: () => void, isMultipla
   const [hintMsg, setHintMsg] = useState<string | null>(null)
   const [wordTimer, setWordTimer] = useState("0.0s")
   
-  // Real-time POV Broadcast Sync
-  useEffect(() => {
-      // In production, sync is handled by App.tsx Supabase hooks.
-      // This useEffect is now just a placeholder for local-only side effects if needed.
-  }, [guesses, isMultiplayer, players, status, updatePlayerGrid, maxAttempts])
+  const opponent = players.find(p => p.id !== 'me' && p.name !== playerName)
 
   useEffect(() => {
     if (status !== 'playing') return
@@ -256,81 +244,32 @@ export const Game = ({ onBack, isMultiplayer }: { onBack: () => void, isMultipla
   }
 
   return (
-    <div className="flex flex-col md:flex-row items-center justify-center gap-12 w-full max-w-7xl h-full relative p-4">
+    <div className="flex flex-col items-center justify-center w-full max-w-7xl min-h-screen relative p-4 gap-8">
       
-      {/* Mobile Actions Sidebar (Minimized) */}
-      <div className="fixed right-4 bottom-32 flex flex-col gap-6 md:hidden z-50">
-        <motion.button 
-          whileTap={INTERACTIVE_VARIANTS.tap}
-          onClick={onDecrypt} 
-          className="flex flex-col items-center gap-1 group"
-        >
-            <div className="p-4 bg-chaos-green/20 rounded-full backdrop-blur-xl text-chaos-green group-active:scale-90 transition-all">
-                <Cpu size={24} />
-            </div>
-            <span className="text-[10px] font-bold uppercase">DECRYPT</span>
-        </motion.button>
+      {/* Top HUD */}
+      <div className="w-full max-w-4xl flex justify-between items-end px-4 mb-4">
+        <div className="text-left">
+          <div className="text-[10px] text-gray-500 font-mono tracking-widest uppercase mb-1">Pulse Sync</div>
+          <div className="text-3xl font-black italic neon-text">{wordTimer}</div>
+        </div>
+        
+        <div className="flex flex-col items-center">
+          <div className={`font-black text-6xl italic leading-none ${timeLeft < 20 ? 'text-chaos-red animate-pulse' : 'text-white'}`}>
+            {formatTime()}
+          </div>
+          <div className="text-[9px] text-chaos-green font-mono uppercase tracking-[0.4em] mt-2">CYC: {difficulty} // {guesses.length}/{maxAttempts}</div>
+        </div>
+
+        <div className="text-right">
+           <div className="text-[10px] text-gray-500 font-mono tracking-widest uppercase mb-1">XP Gain</div>
+           <div className="text-3xl font-black italic neon-text">{(guesses.length * 450).toLocaleString()}</div>
+        </div>
       </div>
 
-      {/* LEFT: Cluster Status */}
-      {isMultiplayer && (
-        <div className="hidden lg:flex flex-col gap-4 w-64 glass-panel p-8 rounded-[2rem] border-white/5 backdrop-blur-3xl">
-            <h3 className="font-mono text-[10px] text-gray-500 uppercase tracking-widest mb-6">Neural Cluster Status</h3>
-            <div className="space-y-6">
-                {players.map(player => (
-                    <div key={player.id} className="space-y-3">
-                        <div className="flex justify-between items-center text-[10px] font-bold">
-                            <span className="flex items-center gap-2 uppercase tracking-tighter">
-                                {player.isHost ? <Bot size={12}/> : <User size={12}/>} 
-                                {player.name}
-                            </span>
-                            <span className="text-chaos-green">{Math.min(30 + (guesses.length * 15), 100)}%</span>
-                        </div>
-                        <div className="h-1 bg-white/5 rounded-full overflow-hidden">
-                            <motion.div 
-                                animate={{ width: `${Math.min(30 + (guesses.length * 15), 100)}%` }}
-                                className={`h-full ${player.isHost ? 'bg-chaos-green' : 'bg-chaos-red'} shadow-[0_0_10px_rgba(0,255,136,0.3)]`}
-                            />
-                        </div>
-                        
-                        {/* OPPONENT POV MINI GRID */}
-                        {player.id !== 'me' && (
-                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                                <MiniGrid 
-                                    guesses={player.gridState || []} 
-                                    targetWord={targetWord} 
-                                    difficulty={difficulty} 
-                                    maxAttempts={maxAttempts} 
-                                />
-                            </motion.div>
-                        )}
-                    </div>
-                ))}
-            </div>
-        </div>
-      )}
-
-      {/* CENTER: Game */}
-      <div className="flex flex-col items-center flex-grow">
-        <div className="w-full flex justify-between items-end px-4 mb-8">
-          <div className="text-left">
-            <div className="text-[10px] text-gray-500 font-mono tracking-widest uppercase mb-1">Pulse Sync</div>
-            <div className="text-3xl font-black italic neon-text">{wordTimer}</div>
-          </div>
-          
-          <div className="flex flex-col items-center">
-            <div className={`font-black text-6xl italic leading-none ${timeLeft < 20 ? 'text-chaos-red animate-pulse' : 'text-white'}`}>
-              {formatTime()}
-            </div>
-            <div className="text-[9px] text-chaos-green font-mono uppercase tracking-[0.4em] mt-2">CYC: {difficulty} // {guesses.length}/{maxAttempts}</div>
-          </div>
-
-          <div className="text-right">
-             <div className="text-[10px] text-gray-500 font-mono tracking-widest uppercase mb-1">XP Gain</div>
-             <div className="text-3xl font-black italic neon-text">{(guesses.length * 450).toLocaleString()}</div>
-          </div>
-        </div>
-
+      {/* Main Arena: Duel View */}
+      <div className={`flex flex-col ${isMultiplayer ? 'xl:flex-row' : ''} items-center justify-center gap-12 w-full`}>
+        
+        {/* LEFT: Player Grid */}
         <div className="relative group">
             <AnimatePresence>
                 {godMode && (
@@ -342,71 +281,61 @@ export const Game = ({ onBack, isMultiplayer }: { onBack: () => void, isMultipla
                     </motion.div>
                 )}
             </AnimatePresence>
-            <div className="flex flex-col gap-2 p-10 rounded-[4rem] bg-white/[0.02] border border-white/5 backdrop-blur-3xl shadow-2xl transition-transform group-hover:scale-[1.01]">
-            {Array.from({ length: maxAttempts }).map((_, i) => (
-                <Row 
-                key={i} 
-                word={i === guesses.length ? currentGuess : (guesses[i] || '')} 
-                targetWord={targetWord} 
-                isSubmitted={i < guesses.length} 
-                difficulty={difficulty}
-                />
-            ))}
+            <div className="flex flex-col gap-2 p-10 rounded-[4rem] bg-white/[0.02] border border-white/5 backdrop-blur-3xl shadow-2xl transition-transform group-hover:scale-[1.01] border-b-8 border-r-8">
+                <div className="flex justify-between items-center mb-6 px-4">
+                    <span className="font-black text-xs tracking-widest text-chaos-green uppercase">YOU POV</span>
+                    <span className="text-[10px] font-mono text-gray-500">{playerName}</span>
+                </div>
+                {Array.from({ length: maxAttempts }).map((_, i) => (
+                    <Row 
+                    key={i} 
+                    word={i === guesses.length ? currentGuess : (guesses[i] || '')} 
+                    targetWord={targetWord} 
+                    isSubmitted={i < guesses.length} 
+                    difficulty={difficulty}
+                    />
+                ))}
             </div>
         </div>
 
-        <Keyboard usedLetters={usedLetters} onKey={onKey} />
-
-        <AnimatePresence>
-          {hintMsg && (
-            <motion.div 
-              initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -20, opacity: 0 }}
-              className="mt-6 px-8 py-4 glass-panel border-chaos-green/50 text-chaos-green font-black italic rounded-2xl shadow-2xl z-50 text-center max-w-sm"
-            >
-              {hintMsg}
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* RIGHT: Opponent Grid (Duel Mode) */}
+        {isMultiplayer && opponent && (
+            <div className="flex flex-col items-center gap-4">
+                <MiniGrid 
+                    name={opponent.name}
+                    guesses={opponent.gridState || []} 
+                    currentGuess={opponent.currentGuess}
+                    targetWord={targetWord} 
+                    difficulty={difficulty} 
+                    maxAttempts={maxAttempts}
+                    isHost={opponent.isHost}
+                />
+            </div>
+        )}
       </div>
 
-      {/* RIGHT: Desktop Tools */}
-      <div className="hidden md:flex flex-col gap-6 w-80">
-        <div className="glass-panel p-8 rounded-[2.5rem] border-white/5 space-y-6 backdrop-blur-3xl shadow-xl">
-           <div className="flex items-center gap-3 border-b border-white/5 pb-4">
-              <Cpu className="text-chaos-green" size={20} />
-              <h3 className="font-black italic text-lg tracking-tight">SOLVER CORE</h3>
-           </div>
-           <motion.button 
-             whileHover={INTERACTIVE_VARIANTS.hover}
-             whileTap={INTERACTIVE_VARIANTS.tap}
-             onClick={onDecrypt} 
-             className="w-full py-5 bg-chaos-green/10 hover:bg-chaos-green/20 text-chaos-green rounded-2xl flex items-center justify-between px-6 font-black transition-all border border-chaos-green/10 shadow-lg shadow-chaos-green/5"
-           >
-              <span>DECRYPT PROTOCOL</span>
-              <Zap size={16} />
-           </motion.button>
-           <div className="p-4 bg-white/5 rounded-2xl border border-white/5 space-y-2">
-               <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest">Protocol Tip</p>
-               <p className="text-xs text-gray-300 font-medium leading-tight opacity-70">Use context clues from DECRYPT to bypass security layers faster.</p>
-           </div>
-        </div>
+      <Keyboard usedLetters={usedLetters} onKey={onKey} />
 
-        <div className="glass-panel p-8 rounded-[2.5rem] border-white/5 backdrop-blur-3xl shadow-xl">
-            <div className="flex items-center justify-between mb-6">
-                <h3 className="font-black italic text-lg tracking-tight uppercase">Session Data</h3>
-                <User size={18} className="text-gray-500" />
-            </div>
-            <div className="space-y-4">
-                <div className="flex justify-between items-center bg-white/5 p-4 rounded-xl border border-white/5">
-                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Efficiency</span>
-                    <span className="text-white font-black italic">89%</span>
-                </div>
-                <div className="flex justify-between items-center bg-white/5 p-4 rounded-xl border border-white/5">
-                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Sync State</span>
-                    <span className="text-chaos-green font-black italic">OPTIMAL</span>
-                </div>
-            </div>
-        </div>
+      <AnimatePresence>
+        {hintMsg && (
+          <motion.div 
+            initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ opacity: 0 }}
+            className="mt-6 px-8 py-4 glass-panel border-chaos-green/50 text-chaos-green font-black italic rounded-2xl shadow-2xl z-50 text-center max-w-sm"
+          >
+            {hintMsg}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Global Actions - Floating Mobile Decrypt */}
+      <div className="fixed right-8 bottom-8 flex flex-col gap-4 md:hidden z-50">
+          <motion.button 
+            whileTap={INTERACTIVE_VARIANTS.tap}
+            onClick={onDecrypt} 
+            className="p-5 bg-chaos-green/20 rounded-full backdrop-blur-xl text-chaos-green border border-chaos-green/20 shadow-2xl"
+          >
+              <Cpu size={24} />
+          </motion.button>
       </div>
 
       {/* Victory/Defeat Overlay */}
