@@ -56,7 +56,8 @@ function App() {
                 name: key,
                 isHost: val[0]?.isHost || false,
                 isReady: val[0]?.isReady || false,
-                gridState: val[0]?.gridState || []
+                gridState: val[0]?.gridState || [],
+                currentGuess: val[0]?.currentGuess || ''
             }))
             setPlayers(syncedPlayers)
         })
@@ -67,7 +68,7 @@ function App() {
             }
         })
         .on('broadcast', { event: 'sync_grid' }, ({ payload }) => {
-            updatePlayerGrid(payload.playerName, payload.guesses)
+            updatePlayerGrid(payload.playerName, payload.guesses, payload.currentGuess)
         })
         .subscribe(async (status) => {
             if (status === 'SUBSCRIBED') {
@@ -78,16 +79,16 @@ function App() {
     return () => { channel.unsubscribe() }
   }, [multiplayerRoomId, playerName, isHost, setPlayers, updatePlayerGrid, setView, initGame])
 
-  // Broadcast local grid changes
+  // Broadcast local grid changes AND typing progress
   useEffect(() => {
       if (multiplayerRoomId && view === 'game') {
           supabase.channel(`room_${multiplayerRoomId}`).send({
               type: 'broadcast',
               event: 'sync_grid',
-              payload: { playerName, guesses }
+              payload: { playerName, guesses, currentGuess }
           })
       }
-  }, [guesses, multiplayerRoomId, view, playerName])
+  }, [guesses, currentGuess, multiplayerRoomId, view, playerName])
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -397,16 +398,6 @@ function App() {
                     </motion.button>
                 )}
             </div>
-
-            {/* Simulated Guest for testing on Host side */}
-            {isHost && players.length > 1 && (
-                <button 
-                    onClick={toggleGuestReadySim}
-                    className="text-[9px] text-gray-500 font-bold hover:text-white transition-colors"
-                >
-                    [DEV_DEBUG: TOGGLE GUEST READY SIM]
-                </button>
-            )}
           </motion.div>
         )}
 

@@ -67,36 +67,49 @@ const triggerHaptic = (type: 'light' | 'medium' | 'success' | 'error' = 'light')
   }
 }
 
-const MiniCell = ({ status }: { status: LetterStatus }) => {
+const MiniCell = ({ letter, status }: { letter?: string, status: LetterStatus }) => {
     const getStatusColor = () => {
         switch (status) {
-            case 'correct': return 'bg-chaos-green shadow-[0_0_5px_rgba(0,255,136,0.5)]'
-            case 'present': return 'bg-chaos-yellow shadow-[0_0_5px_rgba(255,255,0,0.3)]'
-            case 'absent': return 'bg-chaos-gray'
-            default: return 'bg-white/5'
+            case 'correct': return 'bg-chaos-green shadow-[0_0_8px_rgba(0,255,136,0.6)] border-chaos-green'
+            case 'present': return 'bg-chaos-yellow shadow-[0_0_8px_rgba(255,255,0,0.4)] border-chaos-yellow'
+            case 'absent': return 'bg-chaos-gray border-chaos-gray opacity-40'
+            default: return 'bg-white/5 border-white/10'
         }
     }
-    return <div className={`w-5 h-5 rounded-md ${getStatusColor()} transition-colors duration-500`} />
+    return (
+        <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg border flex items-center justify-center text-sm sm:text-base font-black ${getStatusColor()} transition-all duration-300`}>
+            {letter?.toUpperCase()}
+        </div>
+    )
 }
 
-const MiniGrid = ({ guesses, targetWord, difficulty, maxAttempts }: { guesses: string[], targetWord: string, difficulty: string, maxAttempts: number }) => {
+const MiniGrid = ({ guesses, currentGuess, targetWord, difficulty, maxAttempts }: { guesses: string[], currentGuess?: string, targetWord: string, difficulty: string, maxAttempts: number }) => {
     return (
-        <div className="flex flex-col gap-1.5 p-4 glass-panel border-white/10 bg-white/5 rounded-3xl shadow-2xl">
-            {Array.from({ length: maxAttempts }).map((_, i) => (
-                <div key={i} className="flex gap-1.5">
-                    {Array.from({ length: targetWord.length }).map((_, j) => {
-                        const word = guesses[i] || ''
-                        const letter = word[j] || ''
-                        let status: LetterStatus = 'empty'
-                        if (i < guesses.length) {
-                            if (letter === targetWord[j]) status = 'correct'
-                            else if (targetWord.includes(letter)) status = difficulty === 'Asian' ? 'absent' : 'present'
-                            else status = 'absent'
-                        }
-                        return <MiniCell key={j} status={status} />
-                    })}
-                </div>
-            ))}
+        <div className="flex flex-col gap-2 p-6 glass-panel border-white/10 bg-white/5 rounded-[2rem] shadow-2xl scale-110 origin-top-left">
+            {Array.from({ length: maxAttempts }).map((_, i) => {
+                const isCurrentRow = i === guesses.length
+                const word = isCurrentRow ? (currentGuess || '') : (guesses[i] || '')
+                const isSubmitted = i < guesses.length
+
+                return (
+                    <div key={i} className="flex gap-2">
+                        {Array.from({ length: targetWord.length }).map((_, j) => {
+                            const letter = word[j] || ''
+                            let status: LetterStatus = 'empty'
+                            
+                            if (isSubmitted) {
+                                if (letter === targetWord[j]) status = 'correct'
+                                else if (targetWord.includes(letter)) status = difficulty === 'Asian' ? 'absent' : 'present'
+                                else status = 'absent'
+                            } else if (isCurrentRow && letter) {
+                                status = 'empty' // Show typing letters without colors
+                            }
+
+                            return <MiniCell key={j} letter={letter} status={status} />
+                        })}
+                    </div>
+                )
+            })}
         </div>
     )
 }
