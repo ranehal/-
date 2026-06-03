@@ -56,19 +56,139 @@ const Row = React.memo(({ word, targetWord, isSubmitted, difficulty }: { word: s
   return <div className="flex gap-2 mb-2 justify-center">{cells}</div>
 })
 
+const triggerHaptic = (type: 'light' | 'medium' | 'success' | 'error' = 'light') => {
+  if (typeof window !== 'undefined' && window.navigator.vibrate) {
+    switch (type) {
+      case 'light': window.navigator.vibrate(10); break;
+      case 'medium': window.navigator.vibrate(20); break;
+      case 'success': window.navigator.vibrate([10, 30, 10]); break;
+      case 'error': window.navigator.vibrate([50, 20, 50]); break;
+    }
+  }
+}
+
+const MiniCell = ({ status }: { status: LetterStatus }) => {
+    const getStatusColor = () => {
+        switch (status) {
+            case 'correct': return 'bg-chaos-green'
+            case 'present': return 'bg-chaos-yellow'
+            case 'absent': return 'bg-chaos-gray'
+            default: return 'bg-white/5'
+        }
+    }
+    return <div className={`w-3 h-3 rounded-sm ${getStatusColor()} transition-colors duration-500`} />
+}
+
+const MiniGrid = ({ guesses, targetWord, difficulty, maxAttempts }: { guesses: string[], targetWord: string, difficulty: string, maxAttempts: number }) => {
+    return (
+        <div className="flex flex-col gap-1 p-3 glass-panel border-white/5 bg-white/5 rounded-2xl">
+            {Array.from({ length: maxAttempts }).map((_, i) => (
+                <div key={i} className="flex gap-1">
+                    {Array.from({ length: targetWord.length }).map((_, j) => {
+                        const word = guesses[i] || ''
+                        const letter = word[j] || ''
+                        let status: LetterStatus = 'empty'
+                        if (i < guesses.length) {
+                            if (letter === targetWord[j]) status = 'correct'
+                            else if (targetWord.includes(letter)) status = difficulty === 'Asian' ? 'absent' : 'present'
+                            else status = 'absent'
+                        }
+                        return <MiniCell key={j} status={status} />
+                    })}
+                </div>
+            ))}
+        </div>
+    )
+}
+
+const Keyboard = ({ usedLetters, onKey }: { usedLetters: Record<string, LetterStatus>, onKey: (key: string) => void }) => {
+    const rows = [
+        ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
+        ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
+        ['ENTER', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', 'DEL']
+    ]
+
+    return (
+        <div className="flex flex-col gap-2 items-center w-full mt-10">
+            {rows.map((row, i) => (
+                <div key={i} className="flex gap-1 sm:gap-2">
+                    {row.map(key => {
+                        const status = usedLetters[key] || 'empty'
+                        const isAction = key === 'ENTER' || key === 'DEL'
+                        
+                        return (
+                            <motion.button
+                                key={key}
+                                whileHover={{ scale: 1.05, filter: "brightness(1.2)" }}
+                                whileTap={{ scale: 0.9 }}
+                                onClick={() => onKey(key)}
+                                className={`
+                                    ${isAction ? 'px-3 sm:px-6' : 'w-8 sm:w-12'} 
+                                    h-12 sm:h-14 rounded-lg sm:rounded-xl font-black text-[10px] sm:text-sm flex items-center justify-center transition-all duration-300 border-b-4
+                                    ${status === 'correct' ? 'bg-chaos-green border-green-700 text-black' :
+                                      status === 'present' ? 'bg-chaos-yellow border-yellow-700 text-black' :
+                                      status === 'absent' ? 'bg-chaos-gray border-gray-800 text-white opacity-50' :
+                                      'bg-white/10 border-white/5 text-white hover:bg-white/20'}
+                                `}
+                            >
+                                {key}
+                            </motion.button>
+                        )
+                    })}
+                </div>
+            ))}
+        </div>
+    )
+}
+
 export const Game = ({ onBack, isMultiplayer }: { onBack: () => void, isMultiplayer?: boolean }) => {
   const { 
     guesses, currentGuess, maxAttempts, status, targetWord, 
     difficulty, addLetter, removeLetter, submitGuess: storeSubmitGuess,
-    wordHint, godMode, wordStartTime, players
+    wordHint, godMode, wordStartTime, players, updatePlayerGrid
   } = useGameStore()
 
   const { addMatch } = useStatsStore()
   const [matchSaved, setMatchSaved] = useState(false)
 
+  const usedLetters = useMemo(() => {
+      const map: Record<string, LetterStatus> = {}
+      guesses.forEach(word => {
+          for (let i = 0; i < word.length; i++) {
+              const letter = word[i]
+              const status = letter === targetWord[i] ? 'correct' : targetWord.includes(letter) ? (difficulty === 'Asian' ? 'absent' : 'present') : 'absent'
+              if (status === 'correct' || (status === 'present' && map[letter] !== 'correct') || (status === 'absent' && !map[letter])) {
+                  map[letter] = status
+              }
+          }
+      })
+      return map
+  }, [guesses, targetWord, difficulty])
+
   const [hintMsg, setHintMsg] = useState<string | null>(null)
   const [wordTimer, setWordTimer] = useState("0.0s")
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
+  
+  // Real-time POV Broadcast Simulation (In production, this would use Supabase Channels)
+  useEffect(() => {
+      if (isMultiplayer && guesses.length > 0) {
+          // Broadcast my state (simulated)
+          // updatePlayerGrid('me', guesses)
+          
+          // Simulation: Guest makes progress every few seconds
+          const guest = players.find(p => p.id === 'guest_sim')
+          if (guest) {
+              const timer = setTimeout(() => {
+                  const currentGuestGuesses = guest.gridState || []
+                  if (currentGuestGuesses.length < maxAttempts && status === 'playing') {
+                      const mockGuess = "ABCDE" // In real life, this would be the actual data from Supabase
+                      updatePlayerGrid('guest_sim', [...currentGuestGuesses, mockGuess])
+                      triggerHaptic('light')
+                  }
+              }, 8000)
+              return () => clearTimeout(timer)
+          }
+      }
+  }, [guesses, isMultiplayer, players, status, updatePlayerGrid, maxAttempts])
 
   useEffect(() => {
     if (status !== 'playing') return
@@ -102,25 +222,38 @@ export const Game = ({ onBack, isMultiplayer }: { onBack: () => void, isMultipla
 
   const handleEnter = useCallback(() => { 
     const success = storeSubmitGuess()
-    if (!success) audio.play('bonk')
-    else {
+    if (!success) {
+        audio.play('bonk')
+        triggerHaptic('error')
+    } else {
         audio.play('click')
-        if (currentGuess === targetWord) audio.play('win')
+        triggerHaptic('medium')
+        if (currentGuess === targetWord) {
+            audio.play('win')
+            triggerHaptic('success')
+        }
     }
   }, [storeSubmitGuess, currentGuess, targetWord])
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Enter') handleEnter()
-      else if (e.key === 'Backspace') { audio.play('click'); removeLetter(); }
-      else if (/^[a-zA-Z]$/.test(e.key)) { audio.play('click'); addLetter(e.key); }
+      else if (e.key === 'Backspace') { audio.play('click'); triggerHaptic('light'); removeLetter(); }
+      else if (/^[a-zA-Z]$/.test(e.key)) { audio.play('click'); triggerHaptic('light'); addLetter(e.key); }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [handleEnter, removeLetter, addLetter])
 
+  const onKey = (key: string) => {
+      if (key === 'ENTER') handleEnter()
+      else if (key === 'DEL') { audio.play('click'); triggerHaptic('light'); removeLetter(); }
+      else { audio.play('click'); triggerHaptic('light'); addLetter(key); }
+  }
+
   const onDecrypt = () => {
     audio.play('click')
+    triggerHaptic('medium')
     setHintMsg(`WORD_CONTEXT: ${wordHint}`)
     setTimeout(() => setHintMsg(null), 4000)
   }
@@ -162,6 +295,18 @@ export const Game = ({ onBack, isMultiplayer }: { onBack: () => void, isMultipla
                                 className={`h-full ${player.isHost ? 'bg-chaos-green' : 'bg-chaos-red'} shadow-[0_0_10px_rgba(0,255,136,0.3)]`}
                             />
                         </div>
+                        
+                        {/* OPPONENT POV MINI GRID */}
+                        {player.id !== 'me' && (
+                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                                <MiniGrid 
+                                    guesses={player.gridState || []} 
+                                    targetWord={targetWord} 
+                                    difficulty={difficulty} 
+                                    maxAttempts={maxAttempts} 
+                                />
+                            </motion.div>
+                        )}
                     </div>
                 ))}
             </div>
@@ -212,6 +357,8 @@ export const Game = ({ onBack, isMultiplayer }: { onBack: () => void, isMultipla
             ))}
             </div>
         </div>
+
+        <Keyboard usedLetters={usedLetters} onKey={onKey} />
 
         <AnimatePresence>
           {hintMsg && (

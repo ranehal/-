@@ -8,6 +8,7 @@ interface Player {
   name: string
   isHost: boolean
   isReady: boolean
+  gridState?: string[] // Added gridState for POV sync
 }
 
 interface GameState {
@@ -33,6 +34,7 @@ interface GameState {
   // Actions
   setPlayerName: (name: string) => void
   setReady: (id: string, ready: boolean) => void
+  updatePlayerGrid: (id: string, guesses: string[]) => void // Sync POV
   initGame: (difficulty: Difficulty, word: string, hint: string, useTimer?: boolean, roomId?: string | null, isHost?: boolean) => void
   addLetter: (letter: string) => void
   removeLetter: () => void
@@ -68,6 +70,10 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   setReady: (id, ready) => set((state) => ({
     players: state.players.map(p => p.id === id ? { ...p, isReady: ready } : p)
+  })),
+
+  updatePlayerGrid: (id, guesses) => set((state) => ({
+    players: state.players.map(p => p.id === id ? { ...p, gridState: guesses } : p)
   })),
 
   initGame: (difficulty, word, hint, useTimer = true, roomId = null, isHost = true) => {
