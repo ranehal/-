@@ -70,14 +70,14 @@ const triggerHaptic = (type: 'light' | 'medium' | 'success' | 'error' = 'light')
 const MiniCell = ({ letter, status }: { letter?: string, status: LetterStatus }) => {
     const getStatusColor = () => {
         switch (status) {
-            case 'correct': return 'bg-chaos-green shadow-[0_0_8px_rgba(0,255,136,0.6)] border-chaos-green'
-            case 'present': return 'bg-chaos-yellow shadow-[0_0_8px_rgba(255,255,0,0.4)] border-chaos-yellow'
-            case 'absent': return 'bg-chaos-gray border-chaos-gray opacity-40'
-            default: return 'bg-white/5 border-white/10'
+            case 'correct': return 'bg-chaos-green shadow-[0_0_15px_#00ff88] border-chaos-green text-black'
+            case 'present': return 'bg-chaos-yellow shadow-[0_0_10px_#ffff00] border-chaos-yellow text-black'
+            case 'absent': return 'bg-chaos-gray border-chaos-gray text-white opacity-30'
+            default: return 'bg-white/5 border-white/10 text-white/90'
         }
     }
     return (
-        <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg border flex items-center justify-center text-sm sm:text-base font-black ${getStatusColor()} transition-all duration-300`}>
+        <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl border-2 flex items-center justify-center text-lg sm:text-xl font-black ${getStatusColor()} transition-all duration-300 ${!status || status === 'empty' ? 'shadow-[inset_0_0_10px_rgba(255,255,255,0.05)]' : ''}`}>
             {letter?.toUpperCase()}
         </div>
     )
@@ -85,23 +85,39 @@ const MiniCell = ({ letter, status }: { letter?: string, status: LetterStatus })
 
 const MiniGrid = ({ name, guesses, currentGuess, targetWord, difficulty, maxAttempts, isHost }: { name: string, guesses: string[], currentGuess?: string, targetWord: string, difficulty: string, maxAttempts: number, isHost: boolean }) => {
     return (
-        <div className="flex flex-col gap-4 p-8 glass-panel border-white/10 bg-white/[0.03] rounded-[3rem] shadow-2xl scale-90 xl:scale-95 transition-all border-b-8 border-r-8">
+        <div className="flex flex-col gap-6 p-10 glass-panel border-white/10 bg-white/[0.03] rounded-[4rem] shadow-2xl scale-95 transition-all border-b-8 border-r-8 relative overflow-hidden group">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-chaos-green/20 to-transparent" />
+            
             <div className="flex justify-between items-center px-2">
-                <div className="flex items-center gap-3">
-                    <div className={`w-3 h-3 rounded-full ${isHost ? 'bg-chaos-green shadow-[0_0_10px_#00ff88]' : 'bg-chaos-red shadow-[0_0_10px_#ff3366]'} animate-pulse`} />
-                    <span className="font-black text-xs tracking-widest text-gray-400 uppercase">{name} POV</span>
+                <div className="flex items-center gap-4">
+                    <div className="relative">
+                        <div className={`w-4 h-4 rounded-full ${isHost ? 'bg-chaos-green' : 'bg-chaos-red'} animate-ping absolute inset-0 opacity-50`} />
+                        <div className={`w-4 h-4 rounded-full ${isHost ? 'bg-chaos-green' : 'bg-chaos-red'} relative z-10`} />
+                    </div>
+                    <div className="flex flex-col -space-y-1">
+                        <span className="font-black text-sm tracking-widest text-white uppercase">{name}</span>
+                        <span className="text-[9px] font-bold text-gray-500 uppercase tracking-tighter">NODE_MIRROR_ACTIVE</span>
+                    </div>
                 </div>
-                <span className="text-[10px] font-mono text-chaos-green/50">SYNC_ACTIVE</span>
+                <div className="flex items-center gap-2 px-3 py-1 bg-chaos-green/10 rounded-full border border-chaos-green/20">
+                    <Zap size={10} className="text-chaos-green animate-pulse" />
+                    <span className="text-[9px] font-black text-chaos-green uppercase tracking-widest">LIVE_SYNC</span>
+                </div>
             </div>
             
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-3">
                 {Array.from({ length: maxAttempts }).map((_, i) => {
                     const isCurrentRow = i === guesses.length
                     const word = isCurrentRow ? (currentGuess || '') : (guesses[i] || '')
                     const isSubmitted = i < guesses.length
 
                     return (
-                        <div key={i} className="flex gap-2 justify-center">
+                        <motion.div 
+                            key={i} 
+                            animate={isCurrentRow ? { x: [0, -1, 1, 0] } : {}}
+                            transition={{ repeat: Infinity, duration: 2 }}
+                            className={`flex gap-3 justify-center ${isCurrentRow ? 'opacity-100' : isSubmitted ? 'opacity-100' : 'opacity-20'}`}
+                        >
                             {Array.from({ length: targetWord.length }).map((_, j) => {
                                 const letter = word[j] || ''
                                 let status: LetterStatus = 'empty'
@@ -114,9 +130,14 @@ const MiniGrid = ({ name, guesses, currentGuess, targetWord, difficulty, maxAtte
 
                                 return <MiniCell key={j} letter={letter} status={status} />
                             })}
-                        </div>
+                        </motion.div>
                     )
                 })}
+            </div>
+
+            <div className="mt-4 pt-6 border-t border-white/5 flex justify-between items-center text-[10px] font-mono text-gray-600">
+                <span>TRACE_LEVEL: {difficulty}</span>
+                <span>ATTEMPTS: {guesses.length}/{maxAttempts}</span>
             </div>
         </div>
     )

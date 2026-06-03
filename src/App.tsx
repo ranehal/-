@@ -107,7 +107,7 @@ function App() {
           event: 'sync_grid',
           payload: { playerName: sessionId, guesses, currentGuess }
       })
-  }, [currentGuess, guesses, multiplayerRoomId, view, playerName, sessionId])
+  }, [currentGuess, guesses, multiplayerRoomId, view, sessionId])
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
