@@ -67,6 +67,22 @@ const triggerHaptic = (type: 'light' | 'medium' | 'success' | 'error' = 'light')
   }
 }
 
+const MiniCell = ({ letter, status }: { letter?: string, status: LetterStatus }) => {
+    const getStatusColor = () => {
+        switch (status) {
+            case 'correct': return 'bg-chaos-green shadow-[0_0_8px_rgba(0,255,136,0.6)] border-chaos-green'
+            case 'present': return 'bg-chaos-yellow shadow-[0_0_8px_rgba(255,255,0,0.4)] border-chaos-yellow'
+            case 'absent': return 'bg-chaos-gray border-chaos-gray opacity-40'
+            default: return 'bg-white/5 border-white/10'
+        }
+    }
+    return (
+        <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg border flex items-center justify-center text-sm sm:text-base font-black ${getStatusColor()} transition-all duration-300`}>
+            {letter?.toUpperCase()}
+        </div>
+    )
+}
+
 const MiniGrid = ({ name, guesses, currentGuess, targetWord, difficulty, maxAttempts, isHost }: { name: string, guesses: string[], currentGuess?: string, targetWord: string, difficulty: string, maxAttempts: number, isHost: boolean }) => {
     return (
         <div className="flex flex-col gap-4 p-8 glass-panel border-white/10 bg-white/[0.03] rounded-[3rem] shadow-2xl scale-90 xl:scale-100 transition-all border-b-8 border-r-8">

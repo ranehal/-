@@ -2,11 +2,11 @@ import { Howl } from 'howler'
 
 // Tactical / Cyberpunk Minimalist Sound Set
 const SOUNDS = {
-  click: 'https://cdn.freesound.org/previews/544/544053_12151120-lq.mp3', // Soft blip
-  win: 'https://cdn.freesound.org/previews/337/337049_3232293-lq.mp3',   // Sci-fi success
-  lose: 'https://cdn.freesound.org/previews/176/176653_1155071-lq.mp3',  // Error hum
-  bonk: 'https://cdn.freesound.org/previews/415/415209_5121236-lq.mp3',  // Thud
-  flip: 'https://cdn.freesound.org/previews/684/684124_11516244-lq.mp3'  // Mechanical click
+  click: 'https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3',
+  win: 'https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3',
+  lose: 'https://assets.mixkit.co/active_storage/sfx/250/250-preview.mp3',
+  bonk: 'https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3',
+  flip: 'https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3'
 }
 
 class AudioManager {
