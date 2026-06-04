@@ -32,7 +32,7 @@ describe('Multiplayer Sync Logic Protocol', () => {
     expect(updatedOpponent?.currentGuess).toBe('MAN');
     
     const me = useGameStore.getState().players.find(p => p.id === 'me');
-    expect(me?.gridState).toBeUndefined();
+    expect(me?.gridState).toEqual([]);
   });
 
   it('should identify allPlayersReady correctly', () => {

@@ -294,7 +294,7 @@ export const Game = ({ onBack, isMultiplayer }: { onBack: () => void, isMultipla
       </div>
 
       {/* Main Arena: Duel View */}
-      <div className={`flex flex-col xl:flex-row items-center justify-center gap-4 sm:gap-12 w-full max-w-full`}>
+      <div className={`flex flex-row items-start justify-center gap-2 sm:gap-12 w-full max-w-full`}>
         
         {/* LEFT: Player Grid */}
         <div className="relative group">
@@ -302,16 +302,16 @@ export const Game = ({ onBack, isMultiplayer }: { onBack: () => void, isMultipla
                 {godMode && (
                     <motion.div 
                         initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
-                        className="absolute -top-10 sm:-top-12 left-0 right-0 text-center text-chaos-red font-black text-[10px] sm:text-sm tracking-[0.3em] sm:tracking-[0.5em] animate-pulse z-50"
+                        className="absolute -top-6 sm:-top-12 left-0 right-0 text-center text-chaos-red font-black text-[8px] sm:text-sm tracking-[0.2em] sm:tracking-[0.5em] animate-pulse z-50"
                     >
-                        GOD_MODE_ACTIVE // TARGET: {targetWord}
+                        GOD_MODE // {targetWord}
                     </motion.div>
                 )}
             </AnimatePresence>
-            <div className="flex flex-col gap-1.5 sm:gap-2 p-3 sm:p-10 rounded-[1.5rem] sm:rounded-[4rem] bg-white/[0.02] border border-white/5 backdrop-blur-3xl shadow-2xl transition-transform group-hover:scale-[1.01] border-b-4 sm:border-b-8 border-r-4 sm:border-r-8">
-                <div className="flex justify-between items-center mb-2 sm:mb-6 px-2 sm:px-4">
-                    <span className="font-black text-[9px] sm:text-xs tracking-widest text-chaos-green uppercase">YOU POV</span>
-                    <span className="text-[7px] sm:text-[10px] font-mono text-gray-500">{playerName}</span>
+            <div className="flex flex-col gap-1 sm:gap-2 p-2 sm:p-10 rounded-2xl sm:rounded-[4rem] bg-white/[0.02] border border-white/5 backdrop-blur-3xl shadow-2xl transition-transform group-hover:scale-[1.01] border-b-4 sm:border-b-8 border-r-4 sm:border-r-8 scale-[0.6] sm:scale-100 origin-top">
+                <div className="flex justify-between items-center mb-2 sm:mb-6 px-1 sm:px-4">
+                    <span className="font-black text-[8px] sm:text-xs tracking-widest text-chaos-green uppercase">YOU POV</span>
+                    <span className="text-[6px] sm:text-[10px] font-mono text-gray-500">{playerName}</span>
                 </div>
                 {Array.from({ length: maxAttempts }).map((_, i) => (
                     <Row 
@@ -327,7 +327,7 @@ export const Game = ({ onBack, isMultiplayer }: { onBack: () => void, isMultipla
 
         {/* RIGHT: Opponent Grid (Duel Mode) */}
         {isMultiplayer && opponent && (
-            <div className="flex flex-col items-center gap-4">
+            <div className="flex flex-col items-center gap-2 sm:gap-4 scale-[0.6] sm:scale-100 origin-top">
                 <MiniGrid 
                     name={opponent.name}
                     guesses={opponent.gridState || []} 

@@ -228,6 +228,7 @@ function App() {
               <motion.h1 
                 whileHover={{ scale: 1.1, skewX: [0, -5, 5, 0], color: ["#ffffff", "#00ff88", "#ff3366", "#ffffff"] }}
                 transition={{ duration: 0.5 }}
+                onClick={() => { tapFaq(); audio.play('click'); }}
                 className="text-6xl sm:text-8xl font-black italic tracking-tighter neon-text leading-none font-serif cursor-pointer select-none"
                 style={{ fontFamily: 'Georgia, serif' }}
               >

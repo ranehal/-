@@ -112,6 +112,12 @@ function ShaderPlane({ theme }: { theme: GameTheme }) {
       'CHAOS': 4
   }
 
+  const targetTheme = useRef(themeMap[theme])
+  
+  useEffect(() => {
+      targetTheme.current = themeMap[theme]
+  }, [theme])
+
   const uniforms = useRef({
     uTime: { value: 0 },
     uTheme: { value: themeMap[theme] }
@@ -119,7 +125,7 @@ function ShaderPlane({ theme }: { theme: GameTheme }) {
 
   useFrame((state, delta) => {
     uniforms.current.uTime.value = state.clock.getElapsedTime()
-    uniforms.current.uTheme.value = THREE.MathUtils.lerp(uniforms.current.uTheme.value, themeMap[theme], delta * 2)
+    uniforms.current.uTheme.value = THREE.MathUtils.lerp(uniforms.current.uTheme.value, targetTheme.current, delta * 2)
   })
 
   return (
